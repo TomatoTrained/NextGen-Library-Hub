@@ -263,19 +263,9 @@
         }
       }
 
-      // Check if student is already logged in
-      onAuthStateChanged(auth, async (user) => {
-        if (user) {
-          // User is signed in, check if they're a student
-          const userDoc = await getDoc(doc(db, "students", user.uid));
-          if (userDoc.exists()) {
-            // Redirect to dashboard if already logged in
-            window.location.href = "student-dashboard.html";
-          } else {
-            await auth.signOut();
-          }
-        }
+      
       });
     </script>
   </body>
 </html>
+
