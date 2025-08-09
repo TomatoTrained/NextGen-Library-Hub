@@ -1,0 +1,262 @@
+/* Base Styles */
+:root {
+    --primary: #2c3e50;
+    --secondary: #3498db;
+    --accent: #e74c3c;
+    --light: #ecf0f1;
+    --dark: #2c3e50;
+    --success: #2ecc71;
+    --warning: #f39c12;
+    --danger: #e74c3c;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    background-color: #f5f7fa;
+    color: #333;
+}
+
+/* Auth Background */
+.auth-background {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+}
+
+.auth-background .shape {
+    position: absolute;
+    border-radius: 50%;
+}
+
+.shape:first-child {
+    background: linear-gradient(135deg, #3498db, #2c3e50);
+    width: 300px;
+    height: 300px;
+    top: -50px;
+    left: -50px;
+    opacity: 0.8;
+}
+
+.shape:last-child {
+    background: linear-gradient(135deg, #e74c3c, #f39c12);
+    width: 200px;
+    height: 200px;
+    bottom: -50px;
+    right: -50px;
+    opacity: 0.8;
+}
+
+/* Auth Container */
+.auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.auth-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    padding: 40px;
+    width: 100%;
+    max-width: 500px;
+    z-index: 1;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.logo {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.logo i {
+    font-size: 50px;
+    color: var(--secondary);
+}
+
+.logo h2 {
+    margin-top: 10px;
+    color: var(--dark);
+    font-weight: 500;
+}
+
+.auth-card h3 {
+    text-align: center;
+    margin-bottom: 30px;
+    color: var(--dark);
+    font-weight: 500;
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--dark);
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+    transition: all 0.3s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--secondary);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+.password-hint {
+    font-size: 12px;
+    color: #777;
+    margin-top: 5px;
+}
+
+.form-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.form-options label {
+    display: flex;
+    align-items: center;
+    color: #555;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.form-options input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+.form-options a {
+    color: var(--secondary);
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.form-options a:hover {
+    text-decoration: underline;
+}
+
+/* Auth Tabs */
+.auth-tabs {
+    display: flex;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.auth-tabs button {
+    flex: 1;
+    padding: 10px;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    font-size: 16px;
+    color: #777;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.auth-tabs button.active {
+    color: var(--secondary);
+    border-bottom-color: var(--secondary);
+    font-weight: 500;
+}
+
+/* Auth Button */
+.auth-btn {
+    width: 100%;
+    padding: 14px;
+    background-color: var(--secondary);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 10px;
+}
+
+.auth-btn:hover {
+    background-color: #2980b9;
+}
+
+.auth-btn i {
+    margin-right: 8px;
+}
+
+/* Error Message */
+.error-message {
+    color: var(--danger);
+    font-size: 14px;
+    margin: 15px 0;
+    text-align: center;
+}
+
+/* Auth Footer */
+.auth-footer {
+    margin-top: 30px;
+    text-align: center;
+    color: #777;
+    font-size: 14px;
+}
+
+.auth-footer a {
+    color: var(--secondary);
+    text-decoration: none;
+}
+
+.auth-footer a:hover {
+    text-decoration: underline;
+}
+
+.language-switcher {
+    margin-top: 20px;
+}
+
+.language-switcher select {
+    padding: 8px 12px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    background-color: white;
+}
+
+/* USSD Specific */
+.ussd-hint {
+    font-size: 13px;
+    color: #777;
+    margin-top: -10px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .auth-card {
+        padding: 30px 20px;
+    }
+}

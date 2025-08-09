@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NextGen Library Hub | Zimbabwe</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* Zimbabwean Color Scheme */
+      :root {
+        --zim-green: #009739;
+        --zim-yellow: #ffd200;
+        --zim-red: #ce1126;
+        --zim-black: #000000;
+        --zim-white: #ffffff;
+        --zim-light-bg: #f5f7fa;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Poppins", sans-serif;
+      }
+
+      *:before,
+      *:after {
+        padding: 0;
+        margin: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background: var(--zim-light-bg);
+        color: #333;
+        line-height: 1.6;
+      }
+
+      /* Background Shapes Animation */
+      .background {
+        width: 430px;
+        height: 520px;
+        position: fixed;
+        transform: translate(-50%, -50%);
+        left: 50%;
+        top: 50%;
+        z-index: -1;
+      }
+
+      .background .shape {
+        height: 200px;
+        width: 200px;
+        position: absolute;
+        border-radius: 50%;
+      }
+
+      .shape:first-child {
+        background: linear-gradient(var(--zim-green), #23a2f6);
+        left: -80px;
+        top: -80px;
+      }
+
+      .shape:last-child {
+        background: linear-gradient(
+          to right,
+          var(--zim-red),
+          var(--zim-yellow)
+        );
+        right: -30px;
+        bottom: -80px;
+      }
+
+      /* Zimbabwe Flag Header */
+      .flag-header {
+        display: flex;
+        height: 8px;
+        position: fixed;
+        top: 0;
+        width: 100%;
+        z-index: 1000;
+      }
+      .flag-color {
+        flex: 1;
+      }
+      .green {
+        background-color: var(--zim-green);
+      }
+      .yellow {
+        background-color: var(--zim-yellow);
+      }
+      .red {
+        background-color: var(--zim-red);
+      }
+      .black {
+        background-color: var(--zim-black);
+      }
+      .white {
+        background-color: var(--zim-white);
+      }
+
+      /* Main Content */
+      .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 2rem;
+        text-align: center;
+        margin-top: 50px;
+      }
+
+      .logo {
+        margin: 2rem 0;
+        color: var(--zim-green);
+        font-size: 2.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .logo i {
+        margin-right: 15px;
+        font-size: 2.8rem;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+        margin-bottom: 1.5rem;
+        color: var(--zim-black);
+        font-weight: 600;
+      }
+
+      p.subtitle {
+        font-size: 1.2rem;
+        margin-bottom: 3rem;
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
+        color: #555;
+        font-weight: 300;
+      }
+
+      /* Login Card */
+      .login-card {
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 15px;
+        padding: 2.5rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        max-width: 450px;
+        margin: 0 auto;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: transform 0.3s, box-shadow 0.3s;
+      }
+
+      .login-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+      }
+
+      .login-card h2 {
+        margin-bottom: 1.8rem;
+        color: var(--zim-black);
+        font-weight: 500;
+        font-size: 1.8rem;
+      }
+
+      .btn-container {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        margin-top: 1.5rem;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 14px 30px;
+        border-radius: 30px;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.3s;
+        font-size: 1rem;
+        cursor: pointer;
+        border: none;
+      }
+
+      .btn i {
+        margin-right: 10px;
+        font-size: 1.1rem;
+      }
+
+      .btn-primary {
+        background-color: var(--zim-green);
+        color: white;
+        border: 2px solid var(--zim-green);
+      }
+
+      .btn-primary:hover {
+        background-color: #008030;
+        border-color: #008030;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 151, 57, 0.3);
+      }
+
+      .btn-outline {
+        border: 2px solid var(--zim-green);
+        color: var(--zim-green);
+        background: transparent;
+      }
+
+      .btn-outline:hover {
+        background-color: var(--zim-green);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 151, 57, 0.3);
+      }
+
+      /* Footer */
+      footer {
+        margin-top: 3rem;
+        padding: 1.5rem;
+        color: #666;
+        font-size: 0.9rem;
+        background-color: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(5px);
+        border-top: 1px solid rgba(0, 0, 0, 0.05);
+      }
+
+      /* Animations */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      @keyframes slideIn {
+        from {
+          transform: translateY(20px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      .container {
+        animation: fadeIn 0.6s ease-out;
+      }
+
+      .login-card {
+        animation: slideIn 0.6s ease-out 0.2s both;
+      }
+
+      /* Responsive Styles */
+      @media (max-width: 768px) {
+        .container {
+          padding: 1.5rem;
+        }
+
+        .logo {
+          font-size: 2rem;
+        }
+
+        .logo i {
+          font-size: 2.2rem;
+        }
+
+        h1 {
+          font-size: 2rem;
+        }
+
+        .login-card {
+          padding: 1.8rem;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .container {
+          padding: 1rem;
+          margin-top: 30px;
+        }
+
+        .logo {
+          font-size: 1.8rem;
+          margin: 1.5rem 0;
+        }
+
+        h1 {
+          font-size: 1.7rem;
+        }
+
+        p.subtitle {
+          font-size: 1rem;
+          margin-bottom: 2rem;
+        }
+
+        .btn-container {
+          gap: 10px;
+        }
+
+        .btn {
+          padding: 12px 20px;
+          font-size: 0.9rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Zimbabwe Flag Colors -->
+    <div class="flag-header">
+      <div class="flag-color green"></div>
+      <div class="flag-color yellow"></div>
+      <div class="flag-color red"></div>
+      <div class="flag-color black"></div>
+      <div class="flag-color white"></div>
+    </div>
+
+    <!-- Background Shapes -->
+    <div class="background">
+      <div class="shape"></div>
+      <div class="shape"></div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+      <div class="logo">
+        <i class="fas fa-book-open"></i>
+        NextGen Library Hub
+      </div>
+
+      <h1>Modern Library Management for Zimbabwe</h1>
+      <p class="subtitle">
+        A revolutionary digital platform for schools and libraries across
+        Zimbabwe, featuring RFID tracking and USSD access.
+      </p>
+
+      <!-- Login Card -->
+      <div class="login-card">
+        <h2>Access Your Account</h2>
+        <div class="btn-container">
+          <a href="adminlogin.html" class="btn btn-primary">
+            <i class="fas fa-sign-in-alt"></i> Login as Librarian
+          </a>
+          <a href="login.html" class="btn btn-outline">
+            <i class="fas fa-user-plus"></i> Login as Student
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Simple Footer -->
+    <footer>
+      <div class="container">&copy; 2025 NextGen Library Hub | Zimbabwe</div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Login | NextGen Library Hub</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/stylez.css" />
+  </head>
+  <body>
+    <div class="auth-background">
+      <div class="shape"></div>
+      <div class="shape"></div>
+    </div>
+
+    <div class="auth-container">
+      <div class="auth-card">
+        <div class="logo">
+          <i class="fas fa-book-open"></i>
+          <h2>NextGen Library Hub</h2>
+        </div>
+
+        <h3>Student Login</h3>
+
+        <div class="auth-tabs">
+          <button class="active" id="standard-login-tab">Email Login</button>
+          <button id="ussd-login-tab">USSD Login</button>
+        </div>
+
+        <!-- Standard Email Login -->
+        <div id="standard-login">
+          <div class="form-group">
+            <label for="email"
+              ><i class="fas fa-envelope"></i> Student Email</label
+            >
+            <input
+              type="email"
+              id="email"
+              placeholder="student@school.edu.zw"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="password"><i class="fas fa-lock"></i> Password</label>
+            <input type="password" id="password" placeholder="••••••••" />
+          </div>
+
+          <div class="form-options">
+            <label> <input type="checkbox" id="remember" /> Remember me </label>
+            <a href="reset.html">Forgot password?</a>
+          </div>
+        </div>
+
+        <!-- USSD Login (Initially hidden) -->
+        <div id="ussd-login" style="display: none">
+          <div class="form-group">
+            <label for="student-id"
+              ><i class="fas fa-id-card"></i> Student ID</label
+            >
+            <input type="text" id="student-id" placeholder="e.g. ST2024001" />
+          </div>
+          <div class="form-group">
+            <label for="phone"
+              ><i class="fas fa-mobile-alt"></i> Mobile Number</label
+            >
+            <input type="tel" id="phone" placeholder="26377XXXXXXX" />
+          </div>
+          <p class="ussd-hint">We'll send you a USSD prompt to authenticate</p>
+        </div>
+
+        <div id="error-message" class="error-message"></div>
+
+        <button id="login-btn" class="auth-btn">
+          <i class="fas fa-sign-in-alt"></i> Login
+        </button>
+
+        <div class="auth-footer">
+          New student? <a href="signup.html">Activate your account</a>
+          <div class="language-switcher">
+            <select id="language-select">
+              <option value="en">English</option>
+              <option value="sn">Shona</option>
+              <option value="nd">Ndebele</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module">
+      // Import the functions you need from the SDKs you need
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+      import {
+        getAuth,
+        signInWithEmailAndPassword,
+        onAuthStateChanged,
+      } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
+      import {
+        getFirestore,
+        doc,
+        getDoc,
+      } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
+      // Your Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyDNKHjmGKMTJhTGWqI-i8VzaqwVxvnb7tw",
+        authDomain: "nextgenlibraryhub.firebaseapp.com",
+        projectId: "nextgenlibraryhub",
+        storageBucket: "nextgenlibraryhub.appspot.com",
+        messagingSenderId: "18107313735",
+        appId: "1:18107313735:web:54edbb5aca14ca66670b62",
+        measurementId: "G-VHRJSKY7W5",
+      };
+
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+
+      // DOM Elements
+      const standardLoginTab = document.getElementById("standard-login-tab");
+      const ussdLoginTab = document.getElementById("ussd-login-tab");
+      const standardLogin = document.getElementById("standard-login");
+      const ussdLogin = document.getElementById("ussd-login");
+      const loginBtn = document.getElementById("login-btn");
+      const errorMessage = document.getElementById("error-message");
+
+      // Tab switching
+      standardLoginTab.addEventListener("click", () => {
+        standardLoginTab.classList.add("active");
+        ussdLoginTab.classList.remove("active");
+        standardLogin.style.display = "block";
+        ussdLogin.style.display = "none";
+      });
+
+      ussdLoginTab.addEventListener("click", () => {
+        ussdLoginTab.classList.add("active");
+        standardLoginTab.classList.remove("active");
+        ussdLogin.style.display = "block";
+        standardLogin.style.display = "none";
+      });
+
+      // Login function
+      loginBtn.addEventListener("click", async () => {
+        const isStandardLogin = standardLoginTab.classList.contains("active");
+
+        if (isStandardLogin) {
+          // Email login
+          const email = document.getElementById("email").value.trim();
+          const password = document.getElementById("password").value.trim();
+
+          if (!email || !password) {
+            errorMessage.textContent = "Please fill in all fields";
+            return;
+          }
+
+          try {
+            // Sign in with Firebase Authentication
+            const userCredential = await signInWithEmailAndPassword(
+              auth,
+              email,
+              password
+            );
+
+            // Check if user is a student in Firestore
+            const userDoc = await getDoc(
+              doc(db, "students", userCredential.user.uid)
+            );
+
+            if (userDoc.exists()) {
+              // Store student info in sessionStorage
+              sessionStorage.setItem(
+                "studentUser",
+                JSON.stringify({
+                  uid: userDoc.id,
+                  email: userDoc.data().email,
+                  fullName: userDoc.data().fullName,
+                  studentId: userDoc.data().studentId,
+                  grade: userDoc.data().grade,
+                })
+              );
+
+              // Redirect to student dashboard
+              window.location.href = "student-dashboard.html";
+            } else {
+              // User is not registered as student
+              await auth.signOut();
+              errorMessage.textContent = "You are not registered as a student";
+            }
+          } catch (error) {
+            console.error("Login error:", error);
+            errorMessage.textContent = getErrorMessage(error.code);
+          }
+        } else {
+          // USSD login
+          const studentId = document.getElementById("student-id").value.trim();
+          const phone = document.getElementById("phone").value.trim();
+
+          if (!studentId || !phone) {
+            errorMessage.textContent = "Please fill in all fields";
+            return;
+          }
+
+          // In a real implementation, this would call your USSD gateway
+          errorMessage.textContent = `USSD login request sent to ${phone}. Complete authentication on your phone.`;
+
+          // For demo purposes, we'll simulate a successful USSD login
+          setTimeout(async () => {
+            try {
+              // Check if student exists in Firestore
+              const querySnapshot = await getDoc(doc(db, "students", phone));
+
+              if (
+                querySnapshot.exists() &&
+                querySnapshot.data().studentId === studentId
+              ) {
+                // Store student info in sessionStorage
+                sessionStorage.setItem(
+                  "studentUser",
+                  JSON.stringify({
+                    uid: phone,
+                    fullName: querySnapshot.data().fullName,
+                    studentId: querySnapshot.data().studentId,
+                    grade: querySnapshot.data().grade,
+                  })
+                );
+
+                // Redirect to student dashboard
+                window.location.href = "student-dashboard.html";
+              } else {
+                errorMessage.textContent = "Invalid student ID or phone number";
+              }
+            } catch (error) {
+              console.error("USSD login error:", error);
+              errorMessage.textContent = "USSD authentication failed";
+            }
+          }, 2000);
+        }
+      });
+
+      // Helper function to convert Firebase error codes to user-friendly messages
+      function getErrorMessage(errorCode) {
+        switch (errorCode) {
+          case "auth/invalid-email":
+            return "Invalid email address";
+          case "auth/user-disabled":
+            return "This account has been disabled";
+          case "auth/user-not-found":
+            return "No student account found with this email";
+          case "auth/wrong-password":
+            return "Incorrect password";
+          case "auth/too-many-requests":
+            return "Too many attempts. Try again later";
+          default:
+            return "Login failed. Please try again";
+        }
+      }
+
+      // Check if student is already logged in
+      onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          // User is signed in, check if they're a student
+          const userDoc = await getDoc(doc(db, "students", user.uid));
+          if (userDoc.exists()) {
+            // Redirect to dashboard if already logged in
+            window.location.href = "student-dashboard.html";
+          } else {
+            await auth.signOut();
+          }
+        }
+      });
+    </script>
+  </body>
+</html>

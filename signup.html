@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Sign Up | NextGen Library Hub</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/stylez.css" />
+  </head>
+  <body>
+    <div class="auth-background">
+      <div class="shape"></div>
+      <div class="shape"></div>
+    </div>
+
+    <div class="auth-container">
+      <div class="auth-card">
+        <div class="logo">
+          <i class="fas fa-book-open"></i>
+          <h2>NextGen Library Hub</h2>
+        </div>
+
+        <h3>Student Registration</h3>
+
+        <div class="form-group">
+          <label for="name"><i class="fas fa-user"></i> Full Name</label>
+          <input
+            type="text"
+            id="name"
+            placeholder="e.g. Tanaka Moyo"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="student-id"
+            ><i class="fas fa-id-card"></i> Student ID</label
+          >
+          <input
+            type="text"
+            id="student-id"
+            placeholder="e.g. ST2024001"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="email"
+            ><i class="fas fa-envelope"></i> School Email</label
+          >
+          <input
+            type="email"
+            id="email"
+            placeholder="student@school.edu.zw"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="phone"
+            ><i class="fas fa-mobile-alt"></i> Mobile Number</label
+          >
+          <input type="tel" id="phone" placeholder="26377XXXXXXX" required />
+        </div>
+
+        <div class="form-group">
+          <label for="grade"
+            ><i class="fas fa-graduation-cap"></i> Grade/Class</label
+          >
+          <select id="grade" required>
+            <option value="">Select your grade</option>
+            <option value="grade7">Grade 7</option>
+            <option value="grade8">Grade 8</option>
+            <option value="grade9">Grade 9</option>
+            <option value="grade10">Grade 10</option>
+            <option value="grade11">Grade 11</option>
+            <option value="grade12">Grade 12</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="password"><i class="fas fa-lock"></i> Password</label>
+          <input
+            type="password"
+            id="password"
+            placeholder="••••••••"
+            required
+            minlength="6"
+          />
+          <div class="password-hint">Minimum 6 characters</div>
+        </div>
+
+        <div class="form-group">
+          <label for="confirm-password"
+            ><i class="fas fa-lock"></i> Confirm Password</label
+          >
+          <input
+            type="password"
+            id="confirm-password"
+            placeholder="••••••••"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="terms" required />
+            I agree to the <a href="terms.html">Terms of Service</a> and
+            <a href="privacy.html">Privacy Policy</a>
+          </label>
+        </div>
+
+        <div id="error-message" class="error-message"></div>
+        <div id="success-message" class="success-message"></div>
+
+        <button id="signup-btn" class="auth-btn">
+          <i class="fas fa-user-plus"></i> Register
+        </button>
+
+        <div class="auth-footer">
+          Already have an account? <a href="login.html">Login here</a>
+        </div>
+      </div>
+    </div>
+
+    <script type="module">
+      // Import the functions you need from the SDKs you need
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+      import {
+        getAuth,
+        createUserWithEmailAndPassword,
+      } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
+      import {
+        getFirestore,
+        doc,
+        setDoc,
+      } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
+      // Your Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyDNKHjmGKMTJhTGWqI-i8VzaqwVxvnb7tw",
+        authDomain: "nextgenlibraryhub.firebaseapp.com",
+        projectId: "nextgenlibraryhub",
+        storageBucket: "nextgenlibraryhub.appspot.com",
+        messagingSenderId: "18107313735",
+        appId: "1:18107313735:web:54edbb5aca14ca66670b62",
+        measurementId: "G-VHRJSKY7W5",
+      };
+
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+
+      // DOM Elements
+      const signupBtn = document.getElementById("signup-btn");
+      const errorMessage = document.getElementById("error-message");
+      const successMessage = document.getElementById("success-message");
+
+      // Signup function
+      signupBtn.addEventListener("click", async () => {
+        // Get form values
+        const name = document.getElementById("name").value.trim();
+        const studentId = document.getElementById("student-id").value.trim();
+        const email = document.getElementById("email").value.trim();
+        const phone = document.getElementById("phone").value.trim();
+        const grade = document.getElementById("grade").value;
+        const password = document.getElementById("password").value;
+        const confirmPassword =
+          document.getElementById("confirm-password").value;
+        const termsAccepted = document.getElementById("terms").checked;
+
+        // Clear previous messages
+        errorMessage.textContent = "";
+        successMessage.textContent = "";
+
+        // Validate inputs
+        if (
+          !name ||
+          !studentId ||
+          !email ||
+          !phone ||
+          !grade ||
+          !password ||
+          !confirmPassword
+        ) {
+          errorMessage.textContent = "Please fill in all fields";
+          return;
+        }
+
+        if (password !== confirmPassword) {
+          errorMessage.textContent = "Passwords do not match";
+          return;
+        }
+
+        if (password.length < 6) {
+          errorMessage.textContent = "Password must be at least 6 characters";
+          return;
+        }
+
+        if (!termsAccepted) {
+          errorMessage.textContent = "You must accept the terms and conditions";
+          return;
+        }
+
+        try {
+          // Create user in Firebase Authentication
+          const userCredential = await createUserWithEmailAndPassword(
+            auth,
+            email,
+            password
+          );
+
+          // Save additional student data in Firestore
+          await setDoc(doc(db, "students", userCredential.user.uid), {
+            fullName: name,
+            studentId: studentId,
+            email: email,
+            phone: phone,
+            grade: grade,
+            accountType: "student",
+            createdAt: new Date(),
+            status: "active",
+          });
+
+          // Show success message
+          successMessage.textContent =
+            "Registration successful! Redirecting...";
+
+          // Store student info in sessionStorage
+          sessionStorage.setItem(
+            "studentUser",
+            JSON.stringify({
+              uid: userCredential.user.uid,
+              email: email,
+              fullName: name,
+              studentId: studentId,
+              grade: grade,
+            })
+          );
+
+          // Redirect to student dashboard after 2 seconds
+          setTimeout(() => {
+            window.location.href = "student-dashboard.html";
+          }, 2000);
+        } catch (error) {
+          console.error("Signup error:", error);
+          errorMessage.textContent = getErrorMessage(error.code);
+        }
+      });
+
+      // Helper function to convert Firebase error codes to user-friendly messages
+      function getErrorMessage(errorCode) {
+        switch (errorCode) {
+          case "auth/email-already-in-use":
+            return "This email is already registered";
+          case "auth/invalid-email":
+            return "Invalid email address";
+          case "auth/weak-password":
+            return "Password should be at least 6 characters";
+          case "auth/operation-not-allowed":
+            return "Account creation is currently disabled";
+          default:
+            return "Registration failed. Please try again";
+        }
+      }
+
+      // Phone number formatting
+      document.getElementById("phone").addEventListener("input", function (e) {
+        let value = e.target.value.replace(/\D/g, "");
+        if (value.startsWith("0")) {
+          value = "263" + value.substring(1);
+        } else if (!value.startsWith("263")) {
+          value = "263" + value;
+        }
+        e.target.value = value;
+      });
+    </script>
+  </body>
+</html>

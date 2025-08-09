@@ -1,0 +1,719 @@
+/* Base Styles */
+@media screen and (max-width: 400px) {
+    .management-panel {
+        background-color: #3b679e;
+    }
+}
+
+@media screen and (max-width: 800px) {
+    .management-panel {
+        background-color: #7f9bbd;
+    }
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+*:before,
+*:after {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #3b679e;
+    color: beige;
+    text-align: center;
+}
+
+.background {
+    width: 430px;
+    height: 520px;
+    position: fixed;
+    transform: translate(-50%, -50%);
+    left: 50%;
+    top: 50%;
+    z-index: -1;
+}
+
+.background .shape {
+    height: 200px;
+    width: 200px;
+    position: absolute;
+    border-radius: 50%;
+}
+
+.shape:first-child {
+    background: linear-gradient(#1845ad, #23a2f6);
+    left: -80px;
+    top: -80px;
+}
+
+.shape:last-child {
+    background: linear-gradient(to right, #ff512f, #f09819);
+    right: -30px;
+    bottom: -80px;
+}
+
+/* Header Styles */
+.lib-header {
+    background-color: rgba(255, 255, 255, 0.13);
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    backdrop-filter: blur(10px);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 40px rgba(8, 7, 16, 0.6);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.logo i {
+    font-size: 2rem;
+    color: white;
+}
+
+.logo h1 {
+    font-size: 1.5rem;
+    font-weight: 300;
+    color: white;
+}
+
+.lib-nav {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.lib-nav a {
+    color: white;
+    text-decoration: none;
+    font-weight: 300;
+    transition: all 0.3s;
+}
+
+.lib-nav a:hover {
+    color: #f09819;
+}
+
+.lib-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.lib-dropdown-btn {
+    background-color: transparent;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: 300;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.lib-dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    background-color: rgba(255, 255, 255, 0.13);
+    min-width: 160px;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 40px rgba(8, 7, 16, 0.6);
+    z-index: 1;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.lib-dropdown-content a {
+    color: white;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    font-weight: 300;
+    transition: all 0.3s;
+}
+
+.lib-dropdown-content a:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: #f09819;
+}
+
+.lib-dropdown:hover .lib-dropdown-content {
+    display: block;
+}
+
+/* Main Container */
+.container {
+    max-width: 1400px;
+    margin: 30px auto;
+    padding: 0 20px;
+}
+
+/* Card Styles */
+.card {
+    background-color: rgba(255, 255, 255, 0.13);
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 40px rgba(8, 7, 16, 0.6);
+    padding: 30px;
+    margin-bottom: 30px;
+}
+
+.card h3 {
+    font-size: 1.5rem;
+    font-weight: 300;
+    margin-bottom: 20px;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.card h4 {
+    font-size: 1.2rem;
+    font-weight: 300;
+    margin: 15px 0;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    font-weight: 300;
+    color: rgba(255, 255, 255, 0.8);
+    text-align: left;
+}
+
+input[type="text"],
+select {
+    width: 100%;
+    height: 50px;
+    background-color: rgba(255, 255, 255, 0.07);
+    border-radius: 5px;
+    padding: 0 15px;
+    font-size: 14px;
+    font-weight: 300;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s;
+}
+
+input[type="text"]:focus,
+select:focus {
+    outline: none;
+    border-color: #23a2f6;
+    box-shadow: 0 0 0 2px rgba(35, 162, 246, 0.3);
+}
+
+::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Button Styles */
+button {
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-student {
+    width: 100%;
+    background: linear-gradient(#1845ad, #23a2f6);
+    color: white;
+    padding: 15px 0;
+    font-size: 1rem;
+    font-weight: 300;
+    border-radius: 25px;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.btn-student:hover {
+    background: linear-gradient(to right, #f8e95d, #f09819);
+    color: #1845ad;
+}
+
+.btn-staff {
+    width: 100%;
+    background: linear-gradient(to right, #ff512f, #f09819);
+    color: white;
+    padding: 15px 0;
+    font-size: 1rem;
+    font-weight: 300;
+    border-radius: 25px;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.btn-staff:hover {
+    background: linear-gradient(to left, #1845ad, #23a2f6);
+    color: #ff512f;
+}
+
+/* Search Box */
+.search-box {
+    display: flex;
+    margin-bottom: 20px;
+}
+
+.search-box input {
+    flex: 1;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.search-box button {
+    width: 50px;
+    background: linear-gradient(#1845ad, #23a2f6);
+    color: white;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border: none;
+}
+
+.search-box button:hover {
+    background: linear-gradient(to right, #ff512f, #f09819);
+}
+
+/* RFID Simulator */
+.rfid-simulator {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.3);
+}
+
+/* Library View */
+.library-view {
+    background-color: rgba(255, 255, 255, 0.13);
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 40px rgba(8, 7, 16, 0.6);
+    padding: 30px;
+    margin-top: 20px;
+}
+
+.library-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.library-header h2 {
+    font-size: 1.5rem;
+    font-weight: 300;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#book-counter {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Book List */
+#book-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.book-card {
+    background-color: rgba(255, 255, 255, 0.13);
+    border-radius: 10px;
+    padding: 20px;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    transition: transform 0.3s;
+}
+
+.book-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.book-card h3 {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+    color: white;
+}
+
+.book-meta {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 10px;
+}
+
+.book-status {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin: 10px 0;
+}
+
+.status-available {
+    background-color: rgba(52, 168, 83, 0.2);
+    color: #34a853;
+}
+
+.status-checked-out {
+    background-color: rgba(234, 67, 53, 0.2);
+    color: #ea4335;
+}
+
+.status-overdue {
+    background-color: rgba(234, 67, 53, 0.3);
+    color: #ea4335;
+    animation: pulse 1.5s infinite;
+}
+
+.due-date {
+    font-size: 0.8rem;
+    color: #fbbc05;
+    margin-top: 5px;
+}
+
+.book-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.book-actions button {
+    flex: 1;
+    padding: 8px;
+    border-radius: 5px;
+    border: none;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.edit-btn {
+    background-color: #fbbc05;
+    color: #000;
+}
+
+.checkout-btn {
+    background-color: #4285f4;
+    color: white;
+}
+
+.return-btn {
+    background-color: #34a853;
+    color: white;
+}
+
+.delete-btn {
+    background-color: #ea4335;
+    color: white;
+}
+
+/* Recommendations */
+#recommendations {
+    margin-bottom: 20px;
+}
+
+.recommendations {
+    background-color: rgba(66, 133, 244, 0.2);
+    border-left: 4px solid #4285f4;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.recommendations h3 {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.rec-book {
+    padding: 8px 0;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.rec-book:hover {
+    color: #f09819;
+}
+
+.rec-book:last-child {
+    border-bottom: none;
+}
+
+/* Data Actions */
+.data-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+    justify-content: center;
+}
+
+.data-actions button,
+.data-actions .import-btn {
+    flex: 1;
+    max-width: 200px;
+}
+
+.import-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+    text-align: center;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    animation: fadeIn 0.3s;
+}
+
+.modal-content {
+    background-color: rgba(255, 255, 255, 0.13);
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 40px rgba(8, 7, 16, 0.6);
+    width: 90%;
+    max-width: 500px;
+    padding: 30px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: slideIn 0.3s;
+}
+
+.close {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 1.5rem;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.close:hover {
+    color: #ea4335;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from { transform: translate(-50%, -60%); opacity: 0; }
+    to { transform: translate(-50%, -50%); opacity: 1; }
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+@keyframes scan {
+    0% { box-shadow: 0 0 0 0 rgba(52, 168, 83, 0.7); }
+    100% { box-shadow: 0 0 0 10px rgba(52, 168, 83, 0); }
+}
+
+.scan-animation {
+    animation: scan 1s ease-out;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .management-panel {
+        grid-template-columns: 1fr;
+    }
+    
+    #book-list {
+        grid-template-columns: 1fr;
+    }
+    
+    .library-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .data-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .data-actions button,
+    .data-actions .import-btn {
+        max-width: 100%;
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .lib-header {
+        flex-direction: column;
+        padding: 15px;
+    }
+    
+    .logo {
+        margin-bottom: 15px;
+    }
+    
+    .card {
+        padding: 20px 15px;
+    }
+    
+    .library-view {
+        padding: 20px 15px;
+    }
+}
+
+
+/* Auth Container Styles */
+.auth-container {
+    width: 430px;
+    height: auto;
+    position: absolute;
+    transform: translate(-50%, -50%);
+    left: 50%;
+    top: 50%;
+    z-index: 1;
+}
+
+.auth-card {
+    background-color: rgba(255, 255, 255, 0.13);
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 40px rgba(8, 7, 16, 0.6);
+    padding: 50px 35px;
+}
+
+.auth-card h3 {
+    font-size: 32px;
+    font-weight: 100;
+    line-height: 42px;
+    text-align: center;
+    margin-bottom: 30px;
+    color: white;
+}
+
+.auth-card label {
+    display: block;
+    margin-top: 20px;
+    font-size: 16px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.auth-card input {
+    display: block;
+    height: 50px;
+    width: 100%;
+    background-color: rgba(255, 255, 255, 0.07);
+    border-radius: 3px;
+    padding: 0 10px;
+    margin-top: 8px;
+    font-size: 14px;
+    font-weight: 300;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.auth-card input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.auth-btn {
+    width: 100%;
+    background-color: #ffffff;
+    color: #080710;
+    padding: 15px 0;
+    font-size: 18px;
+    font-weight: 600;
+    border-radius: 25px;
+    cursor: pointer;
+    margin-top: 30px;
+    border: none;
+    transition: all 0.3s;
+}
+
+.auth-btn:hover {
+    background-color: rgba(255, 255, 255, 0.8);
+}
+
+.auth-link {
+    margin-top: 20px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.auth-link a {
+    color: #23a2f6;
+    text-decoration: none;
+    transition: all 0.3s;
+}
+
+.auth-link a:hover {
+    text-decoration: underline;
+}
+
+/* Error Message */
+.error-message {
+    color: #f28b82;
+    font-size: 14px;
+    margin-top: 10px;
+    text-align: center;
+}

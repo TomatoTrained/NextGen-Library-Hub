@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Dashboard | NextGen Library Hub</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+      /* Additional student-specific styles */
+      .student-welcome {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+      }
+
+      .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+      }
+
+      .quick-action-card {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px;
+        border-radius: 8px;
+        text-align: center;
+        cursor: pointer;
+        transition: transform 0.3s;
+      }
+
+      .quick-action-card:hover {
+        transform: translateY(-5px);
+        background: rgba(255, 255, 255, 0.15);
+      }
+
+      .quick-action-card i {
+        font-size: 2rem;
+        margin-bottom: 10px;
+      }
+
+      .due-soon {
+        border-left: 4px solid #fbbc05;
+      }
+
+      .overdue {
+        border-left: 4px solid #ea4335;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="background">
+      <div class="shape"></div>
+      <div class="shape"></div>
+    </div>
+
+    <header class="lib-header">
+      <div class="logo">
+        <i class="fas fa-book-open"></i>
+        <h1>NextGen Library Hub</h1>
+      </div>
+      <nav class="lib-nav">
+        <a href="student-dashboard.html"><i class="fas fa-home"></i> Home</a>
+        <a href="student-books.html"><i class="fas fa-book"></i> My Books</a>
+        <div class="lib-dropdown">
+          <button class="lib-dropdown-btn" id="studentDropdownBtn">
+            <i class="fas fa-user"></i> <span id="studentName">Student</span>
+          </button>
+          <div class="lib-dropdown-content">
+            <a href="student-profile.html"
+              ><i class="fas fa-user-cog"></i> Profile</a
+            >
+            <a href="#" id="logoutBtn"
+              ><i class="fas fa-sign-out-alt"></i> Logout</a
+            >
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container">
+      <!-- Student Welcome Section -->
+      <section class="student-welcome">
+        <h2>Welcome back, <span id="welcomeStudentName">Student</span>!</h2>
+        <p>
+          Grade: <span id="studentGrade">-</span> | Student ID:
+          <span id="studentIdDisplay">-</span>
+        </p>
+        <div class="quick-actions">
+          <div
+            class="quick-action-card"
+            onclick="window.location.href='student-books.html'"
+          >
+            <i class="fas fa-book-reader"></i>
+            <h4>My Borrowed Books</h4>
+            <p id="borrowedCount">0 books</p>
+          </div>
+          <div
+            class="quick-action-card"
+            onclick="window.location.href='catalog.html'"
+          >
+            <i class="fas fa-search"></i>
+            <h4>Browse Catalog</h4>
+            <p>Find new books</p>
+          </div>
+          <div
+            class="quick-action-card"
+            onclick="window.location.href='fines.html'"
+          >
+            <i class="fas fa-money-bill-wave"></i>
+            <h4>My Fines</h4>
+            <p id="finesAmount">$0.00</p>
+          </div>
+          <div
+            class="quick-action-card"
+            onclick="window.location.href='history.html'"
+          >
+            <i class="fas fa-history"></i>
+            <h4>Reading History</h4>
+            <p id="historyCount">0 books</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Current Loans Section -->
+      <section class="card">
+        <h3><i class="fas fa-bookmark"></i> My Current Loans</h3>
+        <div id="currentLoans" class="book-list">
+          <p class="empty-message">Loading your books...</p>
+        </div>
+      </section>
+
+      <!-- Recommended Books Section -->
+      <section class="card">
+        <h3><i class="fas fa-star"></i> Recommended For You</h3>
+        <div id="recommendedBooks" class="book-list">
+          <p class="empty-message">Loading recommendations...</p>
+        </div>
+      </section>
+
+      <!-- Quick Book Search -->
+      <section class="card">
+        <h3><i class="fas fa-search"></i> Quick Book Search</h3>
+        <div class="search-box">
+          <input
+            type="text"
+            id="book-search"
+            placeholder="Search by title, author or subject"
+          />
+          <button onclick="searchBooks()">
+            <i class="fas fa-search"></i>
+          </button>
+        </div>
+        <div id="searchResults" class="book-list" style="display: none">
+          <h4>Search Results</h4>
+          <div id="searchResultsList"></div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Book Details Modal -->
+    <div id="bookModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3 id="modalBookTitle"><i class="fas fa-book"></i> Book Details</h3>
+        <div class="book-details">
+          <div class="detail-row">
+            <span class="detail-label">Author:</span>
+            <span id="modalBookAuthor"></span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">ISBN:</span>
+            <span id="modalBookIsbn"></span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Status:</span>
+            <span id="modalBookStatus"></span>
+          </div>
+          <div class="detail-row" id="dueDateRow">
+            <span class="detail-label">Due Date:</span>
+            <span id="modalDueDate"></span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Description:</span>
+            <p id="modalBookDescription"></p>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button id="borrowBtn" class="btn-student" style="display: none">
+            <i class="fas fa-book"></i> Borrow This Book
+          </button>
+          <button id="returnBtn" class="btn-staff" style="display: none">
+            <i class="fas fa-undo"></i> Return Book
+          </button>
+          <button id="renewBtn" class="btn-student" style="display: none">
+            <i class="fas fa-sync"></i> Renew Loan
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+
+    <script>
+      // Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyDNKHjmGKMTJhTGWqI-i8VzaqwVxvnb7tw",
+        authDomain: "nextgenlibraryhub.firebaseapp.com",
+        projectId: "nextgenlibraryhub",
+        storageBucket: "nextgenlibraryhub.appspot.com",
+        messagingSenderId: "18107313735",
+        appId: "1:18107313735:web:54edbb5aca14ca66670b62",
+        measurementId: "G-VHRJSKY7W5",
+      };
+
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
+      const db = firebase.firestore();
+
+      // DOM Elements
+      const studentNameElements = document.querySelectorAll(
+        "#studentName, #welcomeStudentName"
+      );
+      const studentGrade = document.getElementById("studentGrade");
+      const studentIdDisplay = document.getElementById("studentIdDisplay");
+      const borrowedCount = document.getElementById("borrowedCount");
+      const finesAmount = document.getElementById("finesAmount");
+      const historyCount = document.getElementById("historyCount");
+      const currentLoans = document.getElementById("currentLoans");
+      const recommendedBooks = document.getElementById("recommendedBooks");
+      const logoutBtn = document.getElementById("logoutBtn");
+
+      // Student data
+      let currentStudent = null;
+
+      // Check authentication and load student data
+      auth.onAuthStateChanged(async (user) => {
+        if (user) {
+          // User is signed in
+          try {
+            // Get student document from Firestore
+            const studentDoc = await db
+              .collection("students")
+              .doc(user.uid)
+              .get();
+
+            if (studentDoc.exists) {
+              currentStudent = {
+                uid: user.uid,
+                ...studentDoc.data(),
+              };
+
+              // Update UI with student info
+              studentNameElements.forEach(
+                (el) =>
+                  (el.textContent =
+                    currentStudent.fullName || user.email.split("@")[0])
+              );
+              studentGrade.textContent =
+                currentStudent.grade || "Not specified";
+              studentIdDisplay.textContent = currentStudent.studentId || "N/A";
+
+              // Load student data
+              loadStudentData();
+            } else {
+              console.error("No student record found");
+              logout();
+            }
+          } catch (error) {
+            console.error("Error loading student data:", error);
+          }
+        } else {
+          // No user signed in, redirect to login
+          logout();
+        }
+      });
+
+      // Load student-specific data
+      async function loadStudentData() {
+        if (!currentStudent) return;
+
+        try {
+          // Get current loans
+          const loansQuery = await db
+            .collection("loans")
+            .where("studentId", "==", currentStudent.uid)
+            .where("status", "==", "active")
+            .orderBy("dueDate", "asc")
+            .get();
+
+          let loansCount = 0;
+          let overdueCount = 0;
+
+          if (loansQuery.empty) {
+            currentLoans.innerHTML =
+              '<p class="empty-message">You have no books currently checked out</p>';
+          } else {
+            let loansHTML = "";
+            loansQuery.forEach((doc) => {
+              const loan = doc.data();
+              loansCount++;
+
+              const dueDate = loan.dueDate.toDate();
+              const today = new Date();
+              const isOverdue = dueDate < today;
+
+              if (isOverdue) overdueCount++;
+
+              loansHTML += `
+                <div class="book-card ${isOverdue ? "overdue" : "due-soon"}">
+                  <h4>${loan.bookTitle}</h4>
+                  <p class="book-meta">${loan.bookAuthor} • ${loan.bookIsbn}</p>
+                  <p class="due-date">Due: ${dueDate.toDateString()}</p>
+                  <div class="book-actions">
+                    <button onclick="viewBookDetails('${
+                      loan.bookId
+                    }')" class="edit-btn">
+                      <i class="fas fa-info-circle"></i> Details
+                    </button>
+                    <button onclick="renewLoan('${
+                      doc.id
+                    }')" class="checkout-btn">
+                      <i class="fas fa-sync"></i> Renew
+                    </button>
+                  </div>
+                </div>
+              `;
+            });
+            currentLoans.innerHTML = loansHTML;
+          }
+
+          // Update counts
+          borrowedCount.textContent = `${loansCount} book${
+            loansCount !== 1 ? "s" : ""
+          }`;
+
+          // Get fines
+          const finesQuery = await db
+            .collection("fines")
+            .where("studentId", "==", currentStudent.uid)
+            .where("status", "==", "pending")
+            .get();
+
+          let totalFines = 0;
+          finesQuery.forEach((doc) => {
+            totalFines += doc.data().amount || 0;
+          });
+
+          finesAmount.textContent = `$${totalFines.toFixed(2)}`;
+
+          // Load recommended books (simplified example)
+          loadRecommendedBooks();
+        } catch (error) {
+          console.error("Error loading student data:", error);
+        }
+      }
+
+      // Load recommended books
+      async function loadRecommendedBooks() {
+        try {
+          // Simple recommendation based on grade level
+          let query = db
+            .collection("books")
+            .where("status", "==", "available")
+            .orderBy("title")
+            .limit(4);
+
+          if (currentStudent.grade) {
+            // If grade is specified, try to find books for that grade level
+            query = db
+              .collection("books")
+              .where(
+                "recommendedGrades",
+                "array-contains",
+                currentStudent.grade
+              )
+              .where("status", "==", "available")
+              .limit(4);
+          }
+
+          const snapshot = await query.get();
+
+          if (snapshot.empty) {
+            recommendedBooks.innerHTML =
+              '<p class="empty-message">No recommendations available at this time</p>';
+          } else {
+            let booksHTML = "";
+            snapshot.forEach((doc) => {
+              const book = doc.data();
+              booksHTML += `
+                <div class="book-card">
+                  <h4>${book.title}</h4>
+                  <p class="book-meta">${book.author} • ${book.isbn}</p>
+                  <div class="book-actions">
+                    <button onclick="viewBookDetails('${doc.id}')" class="edit-btn">
+                      <i class="fas fa-info-circle"></i> Details
+                    </button>
+                    <button onclick="borrowBook('${doc.id}')" class="checkout-btn">
+                      <i class="fas fa-book"></i> Borrow
+                    </button>
+                  </div>
+                </div>
+              `;
+            });
+            recommendedBooks.innerHTML = booksHTML;
+          }
+        } catch (error) {
+          console.error("Error loading recommended books:", error);
+          recommendedBooks.innerHTML =
+            '<p class="empty-message">Could not load recommendations</p>';
+        }
+      }
+
+      // View book details
+      async function viewBookDetails(bookId) {
+        try {
+          const doc = await db.collection("books").doc(bookId).get();
+          if (doc.exists) {
+            const book = doc.data();
+
+            // Set modal content
+            document.getElementById("modalBookTitle").textContent = book.title;
+            document.getElementById("modalBookAuthor").textContent =
+              book.author;
+            document.getElementById("modalBookIsbn").textContent = book.isbn;
+            document.getElementById("modalBookStatus").textContent =
+              book.status;
+            document.getElementById("modalBookDescription").textContent =
+              book.description || "No description available";
+
+            // Check if student has this book checked out
+            const loanQuery = await db
+              .collection("loans")
+              .where("bookId", "==", bookId)
+              .where("studentId", "==", currentStudent.uid)
+              .where("status", "==", "active")
+              .get();
+
+            const borrowBtn = document.getElementById("borrowBtn");
+            const returnBtn = document.getElementById("returnBtn");
+            const renewBtn = document.getElementById("renewBtn");
+            const dueDateRow = document.getElementById("dueDateRow");
+
+            if (!loanQuery.empty) {
+              // Student has this book checked out
+              const loan = loanQuery.docs[0].data();
+              const dueDate = loan.dueDate.toDate();
+
+              document.getElementById("modalDueDate").textContent =
+                dueDate.toDateString();
+              dueDateRow.style.display = "flex";
+
+              borrowBtn.style.display = "none";
+              returnBtn.style.display = "inline-block";
+              returnBtn.onclick = () => returnBook(loanQuery.docs[0].id);
+
+              renewBtn.style.display = "inline-block";
+              renewBtn.onclick = () => renewLoan(loanQuery.docs[0].id);
+            } else {
+              // Book is not checked out by student
+              dueDateRow.style.display = "none";
+
+              borrowBtn.style.display =
+                book.status === "available" ? "inline-block" : "none";
+              borrowBtn.onclick = () => borrowBook(bookId);
+
+              returnBtn.style.display = "none";
+              renewBtn.style.display = "none";
+            }
+
+            // Show modal
+            document.getElementById("bookModal").style.display = "block";
+          }
+        } catch (error) {
+          console.error("Error loading book details:", error);
+          alert("Could not load book details");
+        }
+      }
+
+      // Borrow a book
+      async function borrowBook(bookId) {
+        if (!currentStudent) return;
+
+        try {
+          // Get book details
+          const bookDoc = await db.collection("books").doc(bookId).get();
+          if (!bookDoc.exists || bookDoc.data().status !== "available") {
+            alert("This book is not available for borrowing");
+            return;
+          }
+
+          // Calculate due date (14 days from now)
+          const dueDate = new Date();
+          dueDate.setDate(dueDate.getDate() + 14);
+
+          // Create loan record
+          await db.collection("loans").add({
+            bookId: bookId,
+            bookTitle: bookDoc.data().title,
+            bookAuthor: bookDoc.data().author,
+            bookIsbn: bookDoc.data().isbn,
+            studentId: currentStudent.uid,
+            studentName: currentStudent.fullName,
+            checkoutDate: new Date(),
+            dueDate: dueDate,
+            status: "active",
+          });
+
+          // Update book status
+          await db.collection("books").doc(bookId).update({
+            status: "checked-out",
+            lastBorrower: currentStudent.uid,
+          });
+
+          alert(
+            "Book borrowed successfully! Due date: " + dueDate.toDateString()
+          );
+          loadStudentData();
+          document.getElementById("bookModal").style.display = "none";
+        } catch (error) {
+          console.error("Error borrowing book:", error);
+          alert("Could not borrow book");
+        }
+      }
+
+      // Return a book
+      async function returnBook(loanId) {
+        if (!confirm("Are you sure you want to return this book?")) return;
+
+        try {
+          const loanDoc = await db.collection("loans").doc(loanId).get();
+          if (!loanDoc.exists) {
+            alert("Loan record not found");
+            return;
+          }
+
+          const loan = loanDoc.data();
+
+          // Update loan status
+          await db.collection("loans").doc(loanId).update({
+            returnDate: new Date(),
+            status: "returned",
+          });
+
+          // Update book status
+          await db.collection("books").doc(loan.bookId).update({
+            status: "available",
+          });
+
+          // Check for overdue and add fine if needed
+          const dueDate = loan.dueDate.toDate();
+          const today = new Date();
+
+          if (today > dueDate) {
+            const daysLate = Math.ceil(
+              (today - dueDate) / (1000 * 60 * 60 * 24)
+            );
+            const fineAmount = daysLate * 0.5; // $0.50 per day
+
+            await db.collection("fines").add({
+              studentId: currentStudent.uid,
+              loanId: loanId,
+              amount: fineAmount,
+              reason: `Late return (${daysLate} day${
+                daysLate !== 1 ? "s" : ""
+              } late)`,
+              issueDate: new Date(),
+              status: "pending",
+            });
+
+            alert(
+              `Book returned successfully. Note: You have a fine of $${fineAmount.toFixed(
+                2
+              )} for late return.`
+            );
+          } else {
+            alert("Book returned successfully!");
+          }
+
+          loadStudentData();
+          document.getElementById("bookModal").style.display = "none";
+        } catch (error) {
+          console.error("Error returning book:", error);
+          alert("Could not return book");
+        }
+      }
+
+      // Renew a loan
+      async function renewLoan(loanId) {
+        try {
+          const loanDoc = await db.collection("loans").doc(loanId).get();
+          if (!loanDoc.exists) {
+            alert("Loan record not found");
+            return;
+          }
+
+          const loan = loanDoc.data();
+          const currentDueDate = loan.dueDate.toDate();
+          const newDueDate = new Date(currentDueDate);
+          newDueDate.setDate(newDueDate.getDate() + 14); // Add 14 days
+
+          // Update loan with new due date
+          await db.collection("loans").doc(loanId).update({
+            dueDate: newDueDate,
+          });
+
+          alert(
+            `Loan renewed successfully! New due date: ${newDueDate.toDateString()}`
+          );
+          loadStudentData();
+          document.getElementById("bookModal").style.display = "none";
+        } catch (error) {
+          console.error("Error renewing loan:", error);
+          alert("Could not renew loan");
+        }
+      }
+
+      // Search books
+      async function searchBooks() {
+        const searchTerm = document.getElementById("book-search").value.trim();
+        if (!searchTerm) return;
+
+        try {
+          // Search by title
+          const titleQuery = db
+            .collection("books")
+            .where("title", ">=", searchTerm)
+            .where("title", "<=", searchTerm + "\uf8ff")
+            .limit(5);
+
+          // Search by author
+          const authorQuery = db
+            .collection("books")
+            .where("author", ">=", searchTerm)
+            .where("author", "<=", searchTerm + "\uf8ff")
+            .limit(5);
+
+          const [titleSnapshot, authorSnapshot] = await Promise.all([
+            titleQuery.get(),
+            authorQuery.get(),
+          ]);
+
+          const resultsList = document.getElementById("searchResultsList");
+          resultsList.innerHTML = "";
+
+          // Combine and deduplicate results
+          const results = new Map();
+
+          titleSnapshot.forEach((doc) => {
+            results.set(doc.id, doc.data());
+          });
+
+          authorSnapshot.forEach((doc) => {
+            if (!results.has(doc.id)) {
+              results.set(doc.id, doc.data());
+            }
+          });
+
+          if (results.size === 0) {
+            resultsList.innerHTML =
+              "<p>No books found matching your search</p>";
+          } else {
+            results.forEach((book, id) => {
+              const bookElement = document.createElement("div");
+              bookElement.className = "book-card";
+              bookElement.innerHTML = `
+                <h4>${book.title}</h4>
+                <p class="book-meta">${book.author} • ${book.isbn}</p>
+                <p class="book-status">Status: ${book.status}</p>
+                <div class="book-actions">
+                  <button onclick="viewBookDetails('${id}')" class="edit-btn">
+                    <i class="fas fa-info-circle"></i> Details
+                  </button>
+                  ${
+                    book.status === "available"
+                      ? `<button onclick="borrowBook('${id}')" class="checkout-btn">
+                      <i class="fas fa-book"></i> Borrow
+                    </button>`
+                      : ""
+                  }
+                </div>
+              `;
+              resultsList.appendChild(bookElement);
+            });
+          }
+
+          document.getElementById("searchResults").style.display = "block";
+        } catch (error) {
+          console.error("Error searching books:", error);
+          document.getElementById("searchResultsList").innerHTML =
+            "<p>Error searching books</p>";
+        }
+      }
+
+      // Logout function
+      function logout() {
+        auth.signOut().then(() => {
+          window.location.href = "login.html";
+        });
+      }
+
+      // Event listeners
+      logoutBtn.addEventListener("click", logout);
+
+      // Close modal when clicking X
+      document.querySelector(".close").addEventListener("click", () => {
+        document.getElementById("bookModal").style.display = "none";
+      });
+
+      // Close modal when clicking outside
+      window.addEventListener("click", (event) => {
+        if (event.target === document.getElementById("bookModal")) {
+          document.getElementById("bookModal").style.display = "none";
+        }
+      });
+
+      // Search when pressing Enter
+      document
+        .getElementById("book-search")
+        .addEventListener("keypress", (e) => {
+          if (e.key === "Enter") {
+            searchBooks();
+          }
+        });
+    </script>
+  </body>
+</html>

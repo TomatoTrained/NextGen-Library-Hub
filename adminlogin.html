@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Library System - Librarian Login</title>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+             * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+              font-family: "Poppins", sans-serif;
+            }
+
+            body {
+              background: linear-gradient(135deg, #3b679e, #2b5876);
+              height: 100vh;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+            }
+
+            .login-container {
+              background: rgba(255, 255, 255, 0.13);
+              border-radius: 15px;
+              backdrop-filter: blur(10px);
+              border: 2px solid rgba(255, 255, 255, 0.1);
+              box-shadow: 0 0 40px rgba(8, 7, 16, 0.6);
+              padding: 40px;
+              width: 100%;
+              max-width: 450px;
+              text-align: center;
+            }
+
+            .logo {
+              margin-bottom: 30px;
+            }
+
+            .logo i {
+              font-size: 3rem;
+              color: #fff;
+            }
+
+            .logo h1 {
+              color: white;
+              font-weight: 300;
+              margin-top: 10px;
+            }
+
+            .login-form h2 {
+              color: white;
+              font-weight: 300;
+              margin-bottom: 20px;
+            }
+
+            .form-group {
+              margin-bottom: 20px;
+              text-align: left;
+            }
+
+            .form-group label {
+              display: block;
+              margin-bottom: 8px;
+              color: rgba(255, 255, 255, 0.8);
+            }
+
+            .form-group input {
+              width: 100%;
+              padding: 15px;
+              background: rgba(255, 255, 255, 0.07);
+              border: 1px solid rgba(255, 255, 255, 0.2);
+              border-radius: 8px;
+              color: white;
+              font-size: 16px;
+            }
+
+            .form-group input:focus {
+              outline: none;
+              border-color: #23a2f6;
+            }
+
+            .btn-login {
+              width: 100%;
+              padding: 15px;
+              background: linear-gradient(#1845ad, #23a2f6);
+              color: white;
+              border: none;
+              border-radius: 8px;
+              font-size: 16px;
+              cursor: pointer;
+              transition: all 0.3s;
+              margin-top: 10px;
+            }
+
+            .btn-login:hover {
+              background: linear-gradient(to right, #f09819, #ff512f);
+            }
+
+            .forgot-password {
+              margin-top: 20px;
+              color: rgba(255, 255, 255, 0.7);
+              font-size: 14px;
+            }
+
+            .forgot-password a {
+              color: #23a2f6;
+              text-decoration: none;
+            }
+
+            .error-message {
+              color: #ff6b6b;
+              margin-top: 15px;
+              font-size: 14px;
+            }
+
+            .success-message {
+              color: #4bb543;
+              margin-top: 15px;
+              font-size: 14px;
+            }
+    </style>
+  </head>
+  <body>
+    <div class="login-container">
+      <div class="logo">
+        <i class="fas fa-book-open"></i>
+        <h1>NextGen Library Hub</h1>
+      </div>
+
+      <div class="login-form">
+        <h2>Librarian Login</h2>
+
+        <form id="loginForm">
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              required
+              placeholder="Enter your library email"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              required
+              placeholder="Enter your password"
+            />
+          </div>
+
+          <button type="submit" class="btn-login">
+            Login <i class="fas fa-sign-in-alt"></i>
+          </button>
+
+          <div id="errorMessage" class="error-message"></div>
+          <div id="successMessage" class="success-message"></div>
+        </form>
+
+        <div class="forgot-password">
+          <a href="#" id="resetPasswordLink">Forgot your password?</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+      // Import the functions you need from the SDKs you need
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+      import {
+        getAuth,
+        signInWithEmailAndPassword,
+        sendPasswordResetEmail,
+        onAuthStateChanged,
+      } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+      import {
+        getFirestore,
+        doc,
+        getDoc,
+      } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+      // Your web app's Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyDNKHjmGKMTJhTGWqI-i8VzaqwVxvnb7tw",
+        authDomain: "nextgenlibraryhub.firebaseapp.com",
+        projectId: "nextgenlibraryhub",
+        storageBucket: "nextgenlibraryhub.appspot.com",
+        messagingSenderId: "18107313735",
+        appId: "1:18107313735:web:54edbb5aca14ca66670b62",
+        measurementId: "G-VHRJSKY7W5",
+      };
+
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+
+      // Login function
+      document
+        .getElementById("loginForm")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          const email = document.getElementById("email").value.trim();
+          const password = document.getElementById("password").value.trim();
+          const errorElement = document.getElementById("errorMessage");
+          const successElement = document.getElementById("successMessage");
+
+          // Clear previous messages
+          errorElement.textContent = "";
+          successElement.textContent = "";
+
+          if (!email || !password) {
+            errorElement.textContent = "Please fill in all fields";
+            return;
+          }
+
+          try {
+            // Sign in with Firebase Authentication
+            const userCredential = await signInWithEmailAndPassword(
+              auth,
+              email,
+              password
+            );
+
+            // Check if user is a librarian in Firestore
+            const userDoc = await getDoc(
+              doc(db, "librarians", userCredential.user.uid)
+            );
+
+            if (userDoc.exists()) {
+              // User is a librarian
+              successElement.textContent = "Login successful! Redirecting...";
+
+              // Store user info in sessionStorage
+              sessionStorage.setItem(
+                "libraryUser",
+                JSON.stringify({
+                  uid: userDoc.id,
+                  email: userDoc.data().email,
+                  fullName: userDoc.data().fullName,
+                  role: userDoc.data().role,
+                })
+              );
+
+              // Redirect to dashboard
+              setTimeout(() => {
+                window.location.href = "librarian-dashboard.html";
+              }, 1000);
+            } else {
+              // User is not registered as librarian
+              await auth.signOut();
+              errorElement.textContent =
+                "You are not authorized as a librarian";
+            }
+          } catch (error) {
+            console.error("Login error:", error);
+            errorElement.textContent = getErrorMessage(error.code);
+          }
+        });
+
+      // Password reset function
+      document
+        .getElementById("resetPasswordLink")
+        .addEventListener("click", async function (e) {
+          e.preventDefault();
+          const email = prompt("Enter your library email address:");
+
+          if (email) {
+            try {
+              await sendPasswordResetEmail(auth, email);
+              alert(
+                `Password reset email sent to ${email}. Please check your inbox.`
+              );
+            } catch (error) {
+              alert(getErrorMessage(error.code));
+            }
+          }
+        });
+
+      // Helper function to convert Firebase error codes to user-friendly messages
+      function getErrorMessage(errorCode) {
+        switch (errorCode) {
+          case "auth/invalid-email":
+            return "Invalid email address";
+          case "auth/user-disabled":
+            return "This account has been disabled";
+          case "auth/user-not-found":
+            return "No account found with this email";
+          case "auth/wrong-password":
+            return "Incorrect password";
+          case "auth/too-many-requests":
+            return "Too many attempts. Try again later";
+          default:
+            return "Login failed. Please try again";
+        }
+      }
+
+      // Check if user is already logged in
+      onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          // User is signed in, check if they're a librarian
+          const userDoc = await getDoc(doc(db, "librarians", user.uid));
+          if (userDoc.exists()) {
+            // Redirect to dashboard if already logged in
+            window.location.href = "librarian-dashboard.html";
+          } else {
+            await auth.signOut();
+          }
+        }
+      });
+    </script>
+  </body>
+</html>

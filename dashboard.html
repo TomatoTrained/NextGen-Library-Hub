@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Librarian Dashboard | NextGen Library Hub</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+      /* Additional librarian-specific styles */
+      .librarian-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+      }
+
+      .stat-card {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .stat-card h4 {
+        margin-bottom: 10px;
+        color: rgba(255, 255, 255, 0.8);
+      }
+
+      .stat-card .stat-value {
+        font-size: 1.8rem;
+        font-weight: 500;
+      }
+
+      .overdue-stat {
+        color: #ff6b6b;
+      }
+
+      .available-stat {
+        color: #4bb543;
+      }
+
+      .rfid-active {
+        animation: pulse 1.5s infinite;
+      }
+
+      @keyframes pulse {
+        0% {
+          box-shadow: 0 0 0 0 rgba(35, 162, 246, 0.7);
+        }
+        70% {
+          box-shadow: 0 0 0 10px rgba(35, 162, 246, 0);
+        }
+        100% {
+          box-shadow: 0 0 0 0 rgba(35, 162, 246, 0);
+        }
+      }
+
+      .rfid-feedback {
+        margin-top: 10px;
+        font-size: 0.9rem;
+        min-height: 20px;
+      }
+
+      .rfid-success {
+        color: #4bb543;
+      }
+
+      .rfid-error {
+        color: #ff6b6b;
+      }
+
+      .book-actions {
+        display: flex;
+        gap: 5px;
+        margin-top: 10px;
+      }
+
+      .book-actions button {
+        flex: 1;
+        padding: 5px;
+        font-size: 0.8rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="background">
+      <div class="shape"></div>
+      <div class="shape"></div>
+    </div>
+
+    <header class="lib-header">
+      <div class="logo">
+        <i class="fas fa-book-open"></i>
+        <h1>NextGen Library Hub</h1>
+      </div>
+      <nav class="lib-nav">
+        <a href="librarian-dashboard.html"
+          ><i class="fas fa-home"></i> Dashboard</a
+        >
+        <a href="librarian-circulation.html"
+          ><i class="fas fa-exchange-alt"></i> Circulation</a
+        >
+        <a href="librarian-reports.html"
+          ><i class="fas fa-chart-bar"></i> Reports</a
+        >
+        <div class="lib-dropdown">
+          <button class="lib-dropdown-btn" id="librarianDropdownBtn">
+            <i class="fas fa-user"></i>
+            <span id="librarianName">Librarian</span>
+          </button>
+          <div class="lib-dropdown-content">
+            <a href="librarian-settings.html"
+              ><i class="fas fa-cog"></i> Settings</a
+            >
+            <a href="#" id="logoutBtn"
+              ><i class="fas fa-sign-out-alt"></i> Logout</a
+            >
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container">
+      <!-- Librarian Statistics -->
+      <section class="librarian-stats">
+        <div class="stat-card">
+          <h4><i class="fas fa-book"></i> Total Books</h4>
+          <div class="stat-value" id="totalBooks">0</div>
+        </div>
+        <div class="stat-card available-stat">
+          <h4><i class="fas fa-check-circle"></i> Available</h4>
+          <div class="stat-value" id="availableBooks">0</div>
+        </div>
+        <div class="stat-card">
+          <h4><i class="fas fa-book-reader"></i> Checked Out</h4>
+          <div class="stat-value" id="checkedOutBooks">0</div>
+        </div>
+        <div class="stat-card overdue-stat">
+          <h4><i class="fas fa-exclamation-circle"></i> Overdue</h4>
+          <div class="stat-value" id="overdueBooks">0</div>
+        </div>
+      </section>
+
+      <!-- Quick Actions -->
+      <section class="management-panel">
+        <div class="card">
+          <h3><i class="fas fa-plus-circle"></i> Add New Book</h3>
+          <div class="form-group">
+            <input type="text" id="book-title" placeholder="Title" required />
+          </div>
+          <div class="form-group">
+            <input type="text" id="book-author" placeholder="Author" required />
+          </div>
+          <div class="form-group">
+            <input
+              type="text"
+              id="book-isbn"
+              placeholder="ISBN (RFID Tag)"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label>Category:</label>
+            <select id="book-category">
+              <option value="fiction">Fiction</option>
+              <option value="non-fiction">Non-Fiction</option>
+              <option value="science">Science</option>
+              <option value="history">History</option>
+              <option value="reference">Reference</option>
+            </select>
+          </div>
+          <button onclick="addBook()" class="btn-student">
+            <i class="fas fa-save"></i> Add Book
+          </button>
+        </div>
+
+        <div class="card rfid-active">
+          <h3><i class="fas fa-satellite-dish"></i> RFID Circulation Desk</h3>
+          <div class="rfid-status">
+            <p>
+              <i class="fas fa-circle" id="rfid-status-icon"></i>
+              <span id="rfid-status-text">Scanner Ready</span>
+            </p>
+          </div>
+          <div class="form-group">
+            <input
+              type="text"
+              id="rfid-input"
+              placeholder="Scan book or student card"
+              autofocus
+            />
+            <div class="rfid-feedback" id="rfid-feedback"></div>
+          </div>
+          <div class="rfid-actions">
+            <button onclick="checkOutBook()" class="btn-student">
+              <i class="fas fa-book"></i> Check Out
+            </button>
+            <button onclick="checkInBook()" class="btn-staff">
+              <i class="fas fa-undo"></i> Check In
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Current Activity -->
+      <section class="library-view">
+        <div class="library-header">
+          <h2><i class="fas fa-clock"></i> Recent Activity</h2>
+          <div class="view-options">
+            <button onclick="showRecentLoans()" class="active">Loans</button>
+            <button onclick="showRecentReturns()">Returns</button>
+            <button onclick="showOverdueBooks()">Overdue</button>
+          </div>
+        </div>
+        <div id="activity-list"></div>
+      </section>
+
+      <!-- Book Management -->
+      <section class="library-view">
+        <div class="library-header">
+          <h2><i class="fas fa-book"></i> Book Management</h2>
+          <div class="search-box">
+            <input
+              type="text"
+              id="search-input"
+              placeholder="Search by title, author or ISBN"
+            />
+            <button onclick="searchBooks()">
+              <i class="fas fa-search"></i>
+            </button>
+          </div>
+        </div>
+        <div id="book-list"></div>
+      </section>
+    </main>
+
+    <!-- Book Details Modal -->
+    <div id="bookModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3><i class="fas fa-book"></i> Book Details</h3>
+        <input type="hidden" id="modal-book-id" />
+        <div class="book-details-grid">
+          <div class="detail-row">
+            <span class="detail-label">Title:</span>
+            <span id="modal-title"></span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Author:</span>
+            <span id="modal-author"></span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">ISBN/RFID:</span>
+            <span id="modal-isbn"></span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Category:</span>
+            <span id="modal-category"></span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Status:</span>
+            <span id="modal-status"></span>
+          </div>
+          <div class="detail-row" id="loan-details">
+            <span class="detail-label">Checked Out To:</span>
+            <span id="modal-borrower"></span>
+            <div class="detail-row">
+              <span class="detail-label">Due Date:</span>
+              <span id="modal-due-date"></span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button id="editBookBtn" class="btn-student">
+            <i class="fas fa-edit"></i> Edit Book
+          </button>
+          <button id="checkOutBtn" class="btn-student">
+            <i class="fas fa-book"></i> Check Out
+          </button>
+          <button id="checkInBtn" class="btn-staff">
+            <i class="fas fa-undo"></i> Check In
+          </button>
+          <button
+            id="deleteBookBtn"
+            class="btn-staff"
+            style="background-color: #ff6b6b"
+          >
+            <i class="fas fa-trash"></i> Delete
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Check Out Modal -->
+    <div id="checkOutModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3><i class="fas fa-book"></i> Check Out Book</h3>
+        <input type="hidden" id="checkout-book-id" />
+        <div class="form-group">
+          <label>Book:</label>
+          <input type="text" id="checkout-book-title" readonly />
+        </div>
+        <div class="form-group">
+          <label>Scan Student ID:</label>
+          <input
+            type="text"
+            id="student-rfid"
+            placeholder="Scan student card"
+            autofocus
+          />
+          <div class="rfid-feedback" id="student-feedback"></div>
+        </div>
+        <div class="form-group">
+          <label>Due Date:</label>
+          <input type="date" id="due-date" />
+        </div>
+        <button onclick="completeCheckOut()" class="btn-student">
+          <i class="fas fa-check-circle"></i> Complete Check Out
+        </button>
+      </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+
+    <script>
+      // Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyDNKHjmGKMTJhTGWqI-i8VzaqwVxvnb7tw",
+        authDomain: "nextgenlibraryhub.firebaseapp.com",
+        projectId: "nextgenlibraryhub",
+        storageBucket: "nextgenlibraryhub.appspot.com",
+        messagingSenderId: "18107313735",
+        appId: "1:18107313735:web:54edbb5aca14ca66670b62",
+        measurementId: "G-VHRJSKY7W5",
+      };
+
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
+      const db = firebase.firestore();
+
+      // DOM Elements
+      const librarianNameElements = document.querySelectorAll("#librarianName");
+      const totalBooksElement = document.getElementById("totalBooks");
+      const availableBooksElement = document.getElementById("availableBooks");
+      const checkedOutBooksElement = document.getElementById("checkedOutBooks");
+      const overdueBooksElement = document.getElementById("overdueBooks");
+      const rfidInput = document.getElementById("rfid-input");
+      const rfidFeedback = document.getElementById("rfid-feedback");
+      const activityList = document.getElementById("activity-list");
+      const bookList = document.getElementById("book-list");
+      const logoutBtn = document.getElementById("logoutBtn");
+
+      // Current scanned item
+      let currentScannedItem = null;
+      let currentAction = null; // 'checkout' or 'checkin'
+
+      // Check authentication and load librarian data
+      auth.onAuthStateChanged(async (user) => {
+        if (user) {
+          // User is signed in
+          try {
+            // Get librarian document from Firestore
+            const librarianDoc = await db
+              .collection("librarians")
+              .doc(user.uid)
+              .get();
+
+            if (librarianDoc.exists) {
+              const librarianData = librarianDoc.data();
+
+              // Update UI with librarian info
+              librarianNameElements.forEach(
+                (el) =>
+                  (el.textContent =
+                    librarianData.fullName || user.email.split("@")[0])
+              );
+
+              // Load library stats
+              loadLibraryStats();
+
+              // Load recent activity
+              showRecentLoans();
+
+              // Load books
+              loadBooks();
+
+              // Set up RFID scanner focus
+              rfidInput.focus();
+            } else {
+              console.error("No librarian record found");
+              logout();
+            }
+          } catch (error) {
+            console.error("Error loading librarian data:", error);
+          }
+        } else {
+          // No user signed in, redirect to login
+          logout();
+        }
+      });
+
+      // Load library statistics
+      async function loadLibraryStats() {
+        try {
+          // Get total books count
+          const totalBooksQuery = await db.collection("books").count().get();
+          totalBooksElement.textContent = totalBooksQuery.data().count;
+
+          // Get available books count
+          const availableBooksQuery = await db
+            .collection("books")
+            .where("status", "==", "available")
+            .count()
+            .get();
+          availableBooksElement.textContent = availableBooksQuery.data().count;
+
+          // Get checked out books count
+          const checkedOutBooksQuery = await db
+            .collection("books")
+            .where("status", "==", "checked-out")
+            .count()
+            .get();
+          checkedOutBooksElement.textContent =
+            checkedOutBooksQuery.data().count;
+
+          // Get overdue books count
+          const overdueLoansQuery = await db
+            .collection("loans")
+            .where("status", "==", "active")
+            .where("dueDate", "<", new Date())
+            .count()
+            .get();
+          overdueBooksElement.textContent = overdueLoansQuery.data().count;
+        } catch (error) {
+          console.error("Error loading library stats:", error);
+        }
+      }
+
+      // Load books for management
+      async function loadBooks() {
+        try {
+          const querySnapshot = await db
+            .collection("books")
+            .orderBy("title")
+            .limit(50)
+            .get();
+
+          bookList.innerHTML = "";
+
+          if (querySnapshot.empty) {
+            bookList.innerHTML =
+              '<p class="empty-message">No books found in the system</p>';
+          } else {
+            querySnapshot.forEach((doc) => {
+              const book = doc.data();
+              const bookElement = document.createElement("div");
+              bookElement.className = "book-card";
+              bookElement.innerHTML = `
+                <h4>${book.title}</h4>
+                <p class="book-meta">${book.author} • ${book.isbn}</p>
+                <p class="book-status">Status: <span class="${
+                  book.status === "available"
+                    ? "status-available"
+                    : "status-checked-out"
+                }">${book.status}</span></p>
+                <div class="book-actions">
+                  <button onclick="viewBookDetails('${
+                    doc.id
+                  }')" class="edit-btn">
+                    <i class="fas fa-info-circle"></i> Details
+                  </button>
+                  <button onclick="prepareCheckOut('${
+                    doc.id
+                  }')" class="checkout-btn" ${
+                book.status !== "available" ? "disabled" : ""
+              }>
+                    <i class="fas fa-book"></i> Check Out
+                  </button>
+                </div>
+              `;
+              bookList.appendChild(bookElement);
+            });
+          }
+        } catch (error) {
+          console.error("Error loading books:", error);
+          bookList.innerHTML =
+            '<p class="empty-message">Error loading books</p>';
+        }
+      }
+
+      // Show recent loans
+      async function showRecentLoans() {
+        try {
+          const querySnapshot = await db
+            .collection("loans")
+            .orderBy("checkoutDate", "desc")
+            .limit(10)
+            .get();
+
+          displayActivity(querySnapshot, "checkout");
+        } catch (error) {
+          console.error("Error loading recent loans:", error);
+          activityList.innerHTML =
+            '<p class="empty-message">Error loading recent activity</p>';
+        }
+      }
+
+      // Show recent returns
+      async function showRecentReturns() {
+        try {
+          const querySnapshot = await db
+            .collection("loans")
+            .where("status", "==", "returned")
+            .orderBy("returnDate", "desc")
+            .limit(10)
+            .get();
+
+          displayActivity(querySnapshot, "return");
+        } catch (error) {
+          console.error("Error loading recent returns:", error);
+          activityList.innerHTML =
+            '<p class="empty-message">Error loading recent returns</p>';
+        }
+      }
+
+      // Show overdue books
+      async function showOverdueBooks() {
+        try {
+          const querySnapshot = await db
+            .collection("loans")
+            .where("status", "==", "active")
+            .where("dueDate", "<", new Date())
+            .orderBy("dueDate")
+            .limit(10)
+            .get();
+
+          displayActivity(querySnapshot, "overdue");
+        } catch (error) {
+          console.error("Error loading overdue books:", error);
+          activityList.innerHTML =
+            '<p class="empty-message">Error loading overdue books</p>';
+        }
+      }
+
+      // Display activity in the activity list
+      function displayActivity(querySnapshot, type) {
+        activityList.innerHTML = "";
+
+        if (querySnapshot.empty) {
+          activityList.innerHTML = `<p class="empty-message">No ${type} activity found</p>`;
+          return;
+        }
+
+        querySnapshot.forEach((doc) => {
+          const activity = doc.data();
+          const activityElement = document.createElement("div");
+          activityElement.className = "activity-card";
+
+          let activityHTML = "";
+          const checkoutDate = activity.checkoutDate.toDate();
+          const dueDate = activity.dueDate.toDate();
+
+          if (type === "checkout") {
+            activityHTML = `
+              <div class="activity-icon"><i class="fas fa-book"></i></div>
+              <div class="activity-details">
+                <h4>${activity.bookTitle}</h4>
+                <p>Checked out to ${activity.studentName}</p>
+                <p class="activity-meta">${checkoutDate.toLocaleString()} • Due ${dueDate.toDateString()}</p>
+              </div>
+            `;
+          } else if (type === "return") {
+            const returnDate = activity.returnDate.toDate();
+            activityHTML = `
+              <div class="activity-icon"><i class="fas fa-undo"></i></div>
+              <div class="activity-details">
+                <h4>${activity.bookTitle}</h4>
+                <p>Returned by ${activity.studentName}</p>
+                <p class="activity-meta">Returned ${returnDate.toLocaleString()}</p>
+              </div>
+            `;
+          } else if (type === "overdue") {
+            const daysOverdue = Math.ceil(
+              (new Date() - dueDate) / (1000 * 60 * 60 * 24)
+            );
+            activityHTML = `
+              <div class="activity-icon overdue-icon"><i class="fas fa-exclamation-circle"></i></div>
+              <div class="activity-details">
+                <h4>${activity.bookTitle}</h4>
+                <p>Checked out to ${activity.studentName}</p>
+                <p class="activity-meta overdue-meta">${daysOverdue} day${
+              daysOverdue !== 1 ? "s" : ""
+            } overdue • Due ${dueDate.toDateString()}</p>
+              </div>
+            `;
+          }
+
+          activityElement.innerHTML = activityHTML;
+          activityList.appendChild(activityElement);
+        });
+      }
+
+      // RFID Scanner functionality
+      rfidInput.addEventListener("input", async function (e) {
+        const rfidValue = e.target.value.trim();
+        if (rfidValue.length < 8) return; // Wait for complete scan
+
+        try {
+          // Check if this is a book or student
+          const bookQuery = await db
+            .collection("books")
+            .where("isbn", "==", rfidValue)
+            .get();
+          const studentQuery = await db
+            .collection("students")
+            .where("rfidTag", "==", rfidValue)
+            .get();
+
+          if (!bookQuery.empty) {
+            // It's a book
+            const bookDoc = bookQuery.docs[0];
+            const book = bookDoc.data();
+            currentScannedItem = {
+              type: "book",
+              id: bookDoc.id,
+              data: book,
+            };
+
+            rfidFeedback.innerHTML = `<span class="rfid-success">Scanned book: ${book.title}</span>`;
+
+            if (currentAction === "checkout") {
+              document.getElementById("checkout-book-id").value = bookDoc.id;
+              document.getElementById("checkout-book-title").value = book.title;
+              document.getElementById("student-rfid").focus();
+            } else if (currentAction === "checkin") {
+              await checkInBook(bookDoc.id);
+            }
+          } else if (!studentQuery.empty) {
+            // It's a student
+            const studentDoc = studentQuery.docs[0];
+            const student = studentDoc.data();
+            currentScannedItem = {
+              type: "student",
+              id: studentDoc.id,
+              data: student,
+            };
+
+            rfidFeedback.innerHTML = `<span class="rfid-success">Scanned student: ${student.fullName}</span>`;
+
+            if (
+              currentAction === "checkout" &&
+              document.getElementById("checkout-book-id").value
+            ) {
+              document.getElementById("student-rfid").value = rfidValue;
+              completeCheckOut();
+            }
+          } else {
+            rfidFeedback.innerHTML = `<span class="rfid-error">No book or student found with this ID</span>`;
+            currentScannedItem = null;
+          }
+
+          // Clear input after processing
+          setTimeout(() => {
+            e.target.value = "";
+            rfidFeedback.innerHTML = "";
+          }, 3000);
+        } catch (error) {
+          console.error("Error processing RFID scan:", error);
+          rfidFeedback.innerHTML = `<span class="rfid-error">Error processing scan</span>`;
+        }
+      });
+
+      // Prepare to check out a book
+      function prepareCheckOut(bookId) {
+        currentAction = "checkout";
+        document.getElementById("checkout-book-id").value = bookId;
+
+        // Get book title
+        db.collection("books")
+          .doc(bookId)
+          .get()
+          .then((doc) => {
+            if (doc.exists) {
+              document.getElementById("checkout-book-title").value =
+                doc.data().title;
+              document.getElementById("checkOutModal").style.display = "block";
+              document.getElementById("student-rfid").focus();
+
+              // Set default due date (14 days from now)
+              const dueDate = new Date();
+              dueDate.setDate(dueDate.getDate() + 14);
+              document.getElementById("due-date").valueAsDate = dueDate;
+            }
+          });
+      }
+
+      // Complete check out process
+      async function completeCheckOut() {
+        const bookId = document.getElementById("checkout-book-id").value;
+        const studentRfid = document.getElementById("student-rfid").value;
+        const dueDate = document.getElementById("due-date").value;
+
+        if (!bookId || !studentRfid || !dueDate) {
+          alert("Please complete all fields");
+          return;
+        }
+
+        try {
+          // Get student details
+          const studentQuery = await db
+            .collection("students")
+            .where("rfidTag", "==", studentRfid)
+            .get();
+
+          if (studentQuery.empty) {
+            alert("Student not found");
+            return;
+          }
+
+          const studentDoc = studentQuery.docs[0];
+          const student = studentDoc.data();
+
+          // Get book details
+          const bookDoc = await db.collection("books").doc(bookId).get();
+          if (!bookDoc.exists || bookDoc.data().status !== "available") {
+            alert("Book not available for checkout");
+            return;
+          }
+
+          const book = bookDoc.data();
+
+          // Create loan record
+          await db.collection("loans").add({
+            bookId: bookId,
+            bookTitle: book.title,
+            bookAuthor: book.author,
+            bookIsbn: book.isbn,
+            studentId: studentDoc.id,
+            studentName: student.fullName,
+            studentRfid: student.rfidTag,
+            checkoutDate: new Date(),
+            dueDate: new Date(dueDate),
+            status: "active",
+          });
+
+          // Update book status
+          await db.collection("books").doc(bookId).update({
+            status: "checked-out",
+            lastBorrower: studentDoc.id,
+          });
+
+          alert(
+            `Book "${book.title}" checked out to ${student.fullName} successfully!`
+          );
+          document.getElementById("checkOutModal").style.display = "none";
+          loadLibraryStats();
+          loadBooks();
+          showRecentLoans();
+        } catch (error) {
+          console.error("Error completing checkout:", error);
+          alert("Could not complete checkout");
+        }
+      }
+
+      // Check in a book
+      async function checkInBook(bookId = null) {
+        if (
+          !bookId &&
+          (!currentScannedItem || currentScannedItem.type !== "book")
+        ) {
+          currentAction = "checkin";
+          rfidFeedback.innerHTML = "<span>Scan a book to check in</span>";
+          rfidInput.focus();
+          return;
+        }
+
+        const actualBookId = bookId || currentScannedItem.id;
+
+        try {
+          // Find active loan for this book
+          const loanQuery = await db
+            .collection("loans")
+            .where("bookId", "==", actualBookId)
+            .where("status", "==", "active")
+            .get();
+
+          if (loanQuery.empty) {
+            alert("No active loan found for this book");
+            return;
+          }
+
+          const loanDoc = loanQuery.docs[0];
+          const loan = loanDoc.data();
+
+          // Update loan status
+          await db.collection("loans").doc(loanDoc.id).update({
+            returnDate: new Date(),
+            status: "returned",
+          });
+
+          // Update book status
+          await db.collection("books").doc(actualBookId).update({
+            status: "available",
+          });
+
+          // Check for overdue and add fine if needed
+          const dueDate = loan.dueDate.toDate();
+          const today = new Date();
+
+          if (today > dueDate) {
+            const daysLate = Math.ceil(
+              (today - dueDate) / (1000 * 60 * 60 * 24)
+            );
+            const fineAmount = daysLate * 0.5; // $0.50 per day
+
+            await db.collection("fines").add({
+              studentId: loan.studentId,
+              loanId: loanDoc.id,
+              amount: fineAmount,
+              reason: `Late return (${daysLate} day${
+                daysLate !== 1 ? "s" : ""
+              } late)`,
+              issueDate: new Date(),
+              status: "pending",
+            });
+
+            alert(
+              `Book checked in successfully. Note: ${
+                loan.studentName
+              } has a fine of $${fineAmount.toFixed(2)} for late return.`
+            );
+          } else {
+            alert("Book checked in successfully!");
+          }
+
+          // Reset RFID
+          currentScannedItem = null;
+          currentAction = null;
+          rfidInput.value = "";
+          rfidFeedback.innerHTML =
+            '<span class="rfid-success">Check in complete. Ready for next scan.</span>';
+
+          // Refresh data
+          loadLibraryStats();
+          loadBooks();
+          showRecentReturns();
+        } catch (error) {
+          console.error("Error checking in book:", error);
+          rfidFeedback.innerHTML =
+            '<span class="rfid-error">Error checking in book</span>';
+        }
+      }
+
+      // View book details
+      async function viewBookDetails(bookId) {
+        try {
+          const bookDoc = await db.collection("books").doc(bookId).get();
+          if (bookDoc.exists) {
+            const book = bookDoc.data();
+
+            // Set modal content
+            document.getElementById("modal-book-id").value = bookId;
+            document.getElementById("modal-title").textContent = book.title;
+            document.getElementById("modal-author").textContent = book.author;
+            document.getElementById("modal-isbn").textContent = book.isbn;
+            document.getElementById("modal-category").textContent =
+              book.category || "Not specified";
+            document.getElementById("modal-status").textContent = book.status;
+
+            // Check if book is checked out
+            const loanQuery = await db
+              .collection("loans")
+              .where("bookId", "==", bookId)
+              .where("status", "==", "active")
+              .get();
+
+            const loanDetails = document.getElementById("loan-details");
+            const checkOutBtn = document.getElementById("checkOutBtn");
+            const checkInBtn = document.getElementById("checkInBtn");
+
+            if (!loanQuery.empty) {
+              const loan = loanQuery.docs[0].data();
+              const dueDate = loan.dueDate.toDate();
+
+              document.getElementById("modal-borrower").textContent =
+                loan.studentName;
+              document.getElementById("modal-due-date").textContent =
+                dueDate.toDateString();
+              loanDetails.style.display = "block";
+
+              checkOutBtn.style.display = "none";
+              checkInBtn.style.display = "inline-block";
+            } else {
+              loanDetails.style.display = "none";
+              checkOutBtn.style.display = "inline-block";
+              checkInBtn.style.display = "none";
+            }
+
+            // Show modal
+            document.getElementById("bookModal").style.display = "block";
+          }
+        } catch (error) {
+          console.error("Error loading book details:", error);
+          alert("Could not load book details");
+        }
+      }
+
+      // Add new book
+      async function addBook() {
+        const title = document.getElementById("book-title").value.trim();
+        const author = document.getElementById("book-author").value.trim();
+        const isbn = document.getElementById("book-isbn").value.trim();
+        const category = document.getElementById("book-category").value;
+
+        if (!title || !author || !isbn) {
+          alert("Please fill in all required fields");
+          return;
+        }
+
+        try {
+          // Check if book with this ISBN already exists
+          const existingBook = await db
+            .collection("books")
+            .where("isbn", "==", isbn)
+            .get();
+
+          if (!existingBook.empty) {
+            alert("A book with this ISBN already exists");
+            return;
+          }
+
+          // Add new book
+          await db.collection("books").add({
+            title: title,
+            author: author,
+            isbn: isbn,
+            category: category,
+            status: "available",
+            addedDate: new Date(),
+          });
+
+          alert("Book added successfully!");
+
+          // Clear form
+          document.getElementById("book-title").value = "";
+          document.getElementById("book-author").value = "";
+          document.getElementById("book-isbn").value = "";
+
+          // Refresh data
+          loadLibraryStats();
+          loadBooks();
+        } catch (error) {
+          console.error("Error adding book:", error);
+          alert("Could not add book");
+        }
+      }
+
+      // Search books
+      async function searchBooks() {
+        const searchTerm = document.getElementById("search-input").value.trim();
+        if (!searchTerm) return;
+
+        try {
+          // Search by title
+          const titleQuery = db
+            .collection("books")
+            .where("title", ">=", searchTerm)
+            .where("title", "<=", searchTerm + "\uf8ff")
+            .limit(10);
+
+          // Search by author
+          const authorQuery = db
+            .collection("books")
+            .where("author", ">=", searchTerm)
+            .where("author", "<=", searchTerm + "\uf8ff")
+            .limit(10);
+
+          // Search by ISBN
+          const isbnQuery = db
+            .collection("books")
+            .where("isbn", "==", searchTerm)
+            .limit(1);
+
+          const [titleSnapshot, authorSnapshot, isbnSnapshot] =
+            await Promise.all([
+              titleQuery.get(),
+              authorQuery.get(),
+              isbnQuery.get(),
+            ]);
+
+          // Combine results
+          const results = new Map();
+
+          titleSnapshot.forEach((doc) => {
+            results.set(doc.id, doc.data());
+          });
+
+          authorSnapshot.forEach((doc) => {
+            if (!results.has(doc.id)) {
+              results.set(doc.id, doc.data());
+            }
+          });
+
+          isbnSnapshot.forEach((doc) => {
+            if (!results.has(doc.id)) {
+              results.set(doc.id, doc.data());
+            }
+          });
+
+          // Display results
+          bookList.innerHTML = "";
+
+          if (results.size === 0) {
+            bookList.innerHTML =
+              '<p class="empty-message">No books found matching your search</p>';
+          } else {
+            results.forEach((book, id) => {
+              const bookElement = document.createElement("div");
+              bookElement.className = "book-card";
+              bookElement.innerHTML = `
+                <h4>${book.title}</h4>
+                <p class="book-meta">${book.author} • ${book.isbn}</p>
+                <p class="book-status">Status: <span class="${
+                  book.status === "available"
+                    ? "status-available"
+                    : "status-checked-out"
+                }">${book.status}</span></p>
+                <div class="book-actions">
+                  <button onclick="viewBookDetails('${id}')" class="edit-btn">
+                    <i class="fas fa-info-circle"></i> Details
+                  </button>
+                  <button onclick="prepareCheckOut('${id}')" class="checkout-btn" ${
+                book.status !== "available" ? "disabled" : ""
+              }>
+                    <i class="fas fa-book"></i> Check Out
+                  </button>
+                </div>
+              `;
+              bookList.appendChild(bookElement);
+            });
+          }
+        } catch (error) {
+          console.error("Error searching books:", error);
+          bookList.innerHTML =
+            '<p class="empty-message">Error searching books</p>';
+        }
+      }
+
+      // Logout function
+      function logout() {
+        auth.signOut().then(() => {
+          window.location.href = "login.html";
+        });
+      }
+
+      // Event listeners
+      logoutBtn.addEventListener("click", logout);
+
+      // Close modals when clicking X
+      document.querySelectorAll(".close").forEach((closeBtn) => {
+        closeBtn.addEventListener("click", function () {
+          this.closest(".modal").style.display = "none";
+        });
+      });
+
+      // Close modals when clicking outside
+      window.addEventListener("click", (event) => {
+        if (event.target.classList.contains("modal")) {
+          event.target.style.display = "none";
+        }
+      });
+
+      // Set default due date (14 days from now)
+      window.addEventListener("DOMContentLoaded", () => {
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + 14);
+        document.getElementById("due-date").valueAsDate = dueDate;
+      });
+    </script>
+  </body>
+</html>
