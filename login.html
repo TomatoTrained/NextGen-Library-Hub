@@ -263,9 +263,22 @@
         }
       }
 
+        
+        // Redirect to student dashboard
+        window.location.href = "student-dashboard.html";
+      } else {
+        // User is logged in but not a student - log them out
+        await auth.signOut();
+      }
+    } catch (error) {
+      console.error("Auto-redirect error:", error);
+    }
+  }
+
       
       });
     </script>
   </body>
 </html>
+
 
