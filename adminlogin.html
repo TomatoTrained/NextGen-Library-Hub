@@ -310,7 +310,7 @@
           const userDoc = await getDoc(doc(db, "librarians", user.uid));
           if (userDoc.exists()) {
             // Redirect to dashboard if already logged in
-            window.location.href = "librarian-dashboard.html";
+            window.location.href = "dashboard.html";
           } else {
             await auth.signOut();
           }
@@ -319,6 +319,7 @@
     </script>
   </body>
 </html>
+
 
 
 
