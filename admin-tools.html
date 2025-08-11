@@ -173,6 +173,58 @@
       document.getElementById('fixLoansBtn').addEventListener('click', ()=> backfillCollection('loans'));
       document.getElementById('fixFinesBtn').addEventListener('click', ()=> backfillCollection('fines'));
       document.getElementById('fixStudentsBtn').addEventListener('click', ()=> backfillCollection('students'));
+
+      // Import handlers
+      function parseCsv(text){
+        const lines = text.split(/\r?\n/).filter(l=>l.trim().length>0);
+        if (lines.length === 0) return [];
+        const headers = lines[0].split(',').map(h=>h.trim().toLowerCase());
+        const idx = {
+          title: headers.indexOf('title'),
+          author: headers.indexOf('author'),
+          isbn: headers.indexOf('isbn'),
+          category: headers.indexOf('category')
+        };
+        const rows = [];
+        for (let i=1;i<lines.length;i++){
+          const cols = lines[i].split(',');
+          rows.push({
+            title: idx.title>=0? cols[idx.title].trim(): '',
+            author: idx.author>=0? cols[idx.author].trim(): '',
+            isbn: idx.isbn>=0? cols[idx.isbn].trim(): '',
+            category: idx.category>=0? cols[idx.category].trim(): 'reference'
+          });
+        }
+        return rows;
+      }
+
+      document.getElementById('importBooksBtn').addEventListener('click', async ()=>{
+        const fileInput = document.getElementById('booksFile');
+        const file = fileInput.files && fileInput.files[0];
+        if (!file){ log('Choose a .json or .csv file first'); return; }
+        const text = await file.text();
+        try{
+          let arr = [];
+          if (file.name.toLowerCase().endsWith('.json')){
+            arr = JSON.parse(text);
+          } else if (file.name.toLowerCase().endsWith('.csv')){
+            arr = parseCsv(text);
+          } else {
+            log('Unsupported file type'); return;
+          }
+          log(`Importing ${arr.length} books from ${file.name}...`);
+          await importBooksFromArray(arr);
+        } catch(e){ log('Import failed: '+ e.message); }
+      });
+
+      document.getElementById('loadSampleBtn').addEventListener('click', async ()=>{
+        try{
+          const res = await fetch('data/sample-books.json', { cache: 'no-store' });
+          const arr = await res.json();
+          log(`Loading sample dataset (${arr.length} books)...`);
+          await importBooksFromArray(arr);
+        } catch(e){ log('Failed to load sample data: '+ e.message); }
+      });
     </script>
   </body>
 </html>
