@@ -62,6 +62,10 @@
             <div style="margin-top:8px">
               <button class="btn-student" id="createSampleStudentBtn"><i class="fas fa-user-plus"></i> Create Sample Student</button>
               <div class="muted">RFID Tag: <span class="mono">STU000001</span></div>
+              <div style="margin-top:8px">
+                <button class="btn-student" id="createTenStudentsBtn"><i class="fas fa-users"></i> Create 10 Sample Students</button>
+                <div class="muted">IDs: ST2024002..ST2024011 • RFID: STU000002..STU000011</div>
+              </div>
             </div>
           </div>
         </div>
@@ -252,6 +256,36 @@
           await db.collection('students').add(payload);
           log('Created sample student with RFID STU000001');
         } catch(e){ log('Failed to create sample student: '+ e.message); }
+      });
+
+      // Create 10 sample students with sequential IDs and RFID tags
+      document.getElementById('createTenStudentsBtn').addEventListener('click', async ()=>{
+        if (!LIB_ID) { log('No LIB_ID set'); return; }
+        let created = 0, skipped = 0;
+        for (let i=2;i<=11;i++){
+          const idx = String(i).padStart(6,'0');
+          const studentId = `ST2024${idx}`; // e.g., ST2024000002
+          const tag = `STU${String(i).padStart(6,'0')}`; // STU000002..
+          try {
+            const dup = await db.collection('students').where('rfidTag','==',tag).limit(1).get();
+            if (!dup.empty) { skipped++; continue; }
+            const payload = {
+              fullName: `Sample Student ${i}`,
+              studentId,
+              email: `student${i}@example.com`,
+              phone: `26377123${String(4500+i).padStart(4,'0')}`,
+              grade: i % 2 === 0 ? 'grade10' : 'grade11',
+              rfidTag: tag,
+              accountType: 'student',
+              status: 'active',
+              createdAt: new Date(),
+              libraryId: LIB_ID
+            };
+            await db.collection('students').add(payload);
+            created++;
+          } catch(e){ log(`Failed student ${i}: `+ e.message); }
+        }
+        log(`Created ${created} students, skipped ${skipped} (already exist).`);
       });
     </script>
   </body>
