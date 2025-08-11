@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Fines | NextGen Library Hub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;300;400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div class="background"><div class="shape"></div><div class="shape"></div></div>
+    <header class="lib-header">
+      <div class="logo"><i class="fas fa-book-open"></i><h1>NextGen Library Hub</h1></div>
+      <nav class="lib-nav">
+        <a href="student-dashboard.html"><i class="fas fa-home"></i> Home</a>
+        <a href="student-books.html"><i class="fas fa-book"></i> My Books</a>
+      </nav>
+    </header>
+
+    <main class="container">
+      <section class="card">
+        <h3><i class="fas fa-money-bill-wave"></i> Pending Fines</h3>
+        <div id="finesList" class="book-list"><p class="empty-message">Loading fines...</p></div>
+        <div id="totalFines" style="margin-top:10px;font-weight:500;"></div>
+      </section>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyDNKHjmGKMTJhTGWqI-i8VzaqwVxvnb7tw",
+        authDomain: "nextgenlibraryhub.firebaseapp.com",
+        projectId: "nextgenlibraryhub",
+        storageBucket: "nextgenlibraryhub.appspot.com",
+        messagingSenderId: "18107313735",
+        appId: "1:18107313735:web:54edbb5aca14ca66670b62",
+        measurementId: "G-VHRJSKY7W5",
+      };
+      firebase.initializeApp(firebaseConfig);
+      firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(console.error);
+      const auth = firebase.auth();
+      const db = firebase.firestore();
+
+      const finesList = document.getElementById('finesList');
+      const totalFines = document.getElementById('totalFines');
+
+      auth.onAuthStateChanged(async (user) => {
+        if (!user) { window.location.href = 'login.html'; return; }
+        try {
+          const q = await db.collection('fines').where('studentId','==', user.uid).where('status','==','pending').get();
+          if (q.empty) { finesList.innerHTML = '<p class="empty-message">No pending fines</p>'; totalFines.textContent=''; return; }
+          let sum = 0; let html='';
+          q.forEach(d => { const f=d.data(); sum += f.amount||0; html += `
+            <div class="book-card">
+              <h4>${f.reason||'Library fine'}</h4>
+              <p class="book-meta">Amount: $${(f.amount||0).toFixed(2)}</p>
+              <p class="book-status">Status: ${f.status}</p>
+            </div>`; });
+          finesList.innerHTML = html;
+          totalFines.textContent = `Total: $${sum.toFixed(2)}`;
+        } catch (e) { console.error(e); finesList.innerHTML = '<p class="empty-message">Failed to load fines</p>'; }
+      });
+    </script>
+  </body>
+</html>

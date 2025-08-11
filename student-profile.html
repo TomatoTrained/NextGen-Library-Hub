@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Profile | NextGen Library Hub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;300;400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div class="background"><div class="shape"></div><div class="shape"></div></div>
+    <header class="lib-header">
+      <div class="logo"><i class="fas fa-book-open"></i><h1>NextGen Library Hub</h1></div>
+      <nav class="lib-nav">
+        <a href="student-dashboard.html"><i class="fas fa-home"></i> Home</a>
+        <a href="student-books.html"><i class="fas fa-book"></i> My Books</a>
+      </nav>
+    </header>
+
+    <main class="container">
+      <section class="card">
+        <h3><i class="fas fa-user"></i> My Profile</h3>
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="fullName" placeholder="Your name" />
+        </div>
+        <div class="form-group">
+          <label>Student ID</label>
+          <input type="text" id="studentId" disabled />
+        </div>
+        <div class="form-group">
+          <label>Grade</label>
+          <input type="text" id="grade" placeholder="e.g. grade10" />
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <input type="tel" id="phone" placeholder="26377XXXXXXX" />
+        </div>
+        <button id="saveBtn" class="btn-student"><i class="fas fa-save"></i> Save</button>
+        <div id="msg" style="margin-top:10px;"></div>
+      </section>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyDNKHjmGKMTJhTGWqI-i8VzaqwVxvnb7tw",
+        authDomain: "nextgenlibraryhub.firebaseapp.com",
+        projectId: "nextgenlibraryhub",
+        storageBucket: "nextgenlibraryhub.appspot.com",
+        messagingSenderId: "18107313735",
+        appId: "1:18107313735:web:54edbb5aca14ca66670b62",
+        measurementId: "G-VHRJSKY7W5",
+      };
+      firebase.initializeApp(firebaseConfig);
+      firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(console.error);
+      const auth = firebase.auth();
+      const db = firebase.firestore();
+
+      const fullName = document.getElementById('fullName');
+      const studentId = document.getElementById('studentId');
+      const grade = document.getElementById('grade');
+      const phone = document.getElementById('phone');
+      const saveBtn = document.getElementById('saveBtn');
+      const msg = document.getElementById('msg');
+      let uid = null;
+
+      auth.onAuthStateChanged(async (user) => {
+        if (!user) { window.location.href = 'login.html'; return; }
+        uid = user.uid;
+        const doc = await db.collection('students').doc(uid).get();
+        if (doc.exists) {
+          const d = doc.data();
+          fullName.value = d.fullName || '';
+          studentId.value = d.studentId || '';
+          grade.value = d.grade || '';
+          phone.value = d.phone || '';
+        }
+      });
+
+      saveBtn.addEventListener('click', async () => {
+        msg.textContent = '';
+        try {
+          await db.collection('students').doc(uid).set({
+            fullName: fullName.value.trim(),
+            grade: grade.value.trim(),
+            phone: phone.value.trim()
+          }, { merge: true });
+          msg.textContent = 'Saved!';
+        } catch (e) { console.error(e); msg.textContent = 'Failed to save'; }
+      });
+    </script>
+  </body>
+</html>

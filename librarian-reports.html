@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reports | NextGen Library Hub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;300;400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div class="background"><div class="shape"></div><div class="shape"></div></div>
+    <header class="lib-header">
+      <div class="logo"><i class="fas fa-book-open"></i><h1>NextGen Library Hub</h1></div>
+      <nav class="lib-nav">
+        <a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
+      </nav>
+    </header>
+
+    <main class="container">
+      <section class="card">
+        <h3><i class="fas fa-chart-bar"></i> Reports</h3>
+        <div class="librarian-stats" id="stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;"></div>
+      </section>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyDNKHjmGKMTJhTGWqI-i8VzaqwVxvnb7tw",
+        authDomain: "nextgenlibraryhub.firebaseapp.com",
+        projectId: "nextgenlibraryhub",
+        storageBucket: "nextgenlibraryhub.appspot.com",
+        messagingSenderId: "18107313735",
+        appId: "1:18107313735:web:54edbb5aca14ca66670b62",
+        measurementId: "G-VHRJSKY7W5",
+      };
+      firebase.initializeApp(firebaseConfig);
+      firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(console.error);
+      const auth = firebase.auth();
+      const db = firebase.firestore();
+
+      const stats = document.getElementById('stats');
+
+      auth.onAuthStateChanged(async (user) => {
+        if (!user) { window.location.href = 'adminlogin.html'; return; }
+        const libDoc = await db.collection('librarians').doc(user.uid).get();
+        if (!libDoc.exists) { await auth.signOut(); window.location.href = 'adminlogin.html'; return; }
+        try {
+          const books = await db.collection('books').get();
+          const available = await db.collection('books').where('status','==','available').get();
+          const checkedOut = await db.collection('books').where('status','==','checked-out').get();
+          const overdue = await db.collection('loans').where('status','==','overdue').get();
+
+          stats.innerHTML = `
+            <div class="stat-card"><h4>Total Books</h4><div class="stat-value">${books.size}</div></div>
+            <div class="stat-card available-stat"><h4>Available</h4><div class="stat-value">${available.size}</div></div>
+            <div class="stat-card"><h4>Checked Out</h4><div class="stat-value">${checkedOut.size}</div></div>
+            <div class="stat-card overdue-stat"><h4>Overdue</h4><div class="stat-value">${overdue.size}</div></div>
+          `;
+        } catch (e) { console.error(e); stats.innerHTML = '<p class="empty-message">Failed to load reports</p>'; }
+      });
+    </script>
+  </body>
+</html>

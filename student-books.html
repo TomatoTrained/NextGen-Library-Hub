@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Books | NextGen Library Hub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;300;400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div class="background"><div class="shape"></div><div class="shape"></div></div>
+    <header class="lib-header">
+      <div class="logo"><i class="fas fa-book-open"></i><h1>NextGen Library Hub</h1></div>
+      <nav class="lib-nav">
+        <a href="student-dashboard.html"><i class="fas fa-home"></i> Home</a>
+        <a href="student-books.html" class="active"><i class="fas fa-book"></i> My Books</a>
+        <div class="lib-dropdown">
+          <button class="lib-dropdown-btn" id="studentDropdownBtn">
+            <i class="fas fa-user"></i> <span id="studentName">Student</span>
+          </button>
+          <div class="lib-dropdown-content">
+            <a href="student-profile.html"><i class="fas fa-user-cog"></i> Profile</a>
+            <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container">
+      <section class="card">
+        <h3><i class="fas fa-bookmark"></i> My Current Loans</h3>
+        <div id="currentLoans" class="book-list">
+          <p class="empty-message">Loading your books...</p>
+        </div>
+      </section>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyDNKHjmGKMTJhTGWqI-i8VzaqwVxvnb7tw",
+        authDomain: "nextgenlibraryhub.firebaseapp.com",
+        projectId: "nextgenlibraryhub",
+        storageBucket: "nextgenlibraryhub.appspot.com",
+        messagingSenderId: "18107313735",
+        appId: "1:18107313735:web:54edbb5aca14ca66670b62",
+        measurementId: "G-VHRJSKY7W5",
+      };
+      firebase.initializeApp(firebaseConfig);
+      firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(console.error);
+      const auth = firebase.auth();
+      const db = firebase.firestore();
+
+      const currentLoans = document.getElementById('currentLoans');
+      const studentName = document.getElementById('studentName');
+      const logoutBtn = document.getElementById('logoutBtn');
+
+      auth.onAuthStateChanged(async (user) => {
+        if (!user) { window.location.href = 'login.html'; return; }
+        try {
+          const studentDoc = await db.collection('students').doc(user.uid).get();
+          if (!studentDoc.exists) { await auth.signOut(); window.location.href = 'login.html'; return; }
+          const profile = studentDoc.data();
+          studentName.textContent = profile.fullName || user.email.split('@')[0];
+
+          const loansQuery = await db.collection('loans')
+            .where('studentId', '==', user.uid)
+            .where('status', '==', 'active')
+            .orderBy('dueDate', 'asc')
+            .get();
+
+          if (loansQuery.empty) {
+            currentLoans.innerHTML = '<p class="empty-message">No active loans</p>';
+          } else {
+            let html = '';
+            loansQuery.forEach((d) => {
+              const loan = d.data();
+              const dueDate = loan.dueDate?.toDate ? loan.dueDate.toDate() : new Date(loan.dueDate);
+              html += `
+                <div class="book-card">
+                  <h4>${loan.bookTitle}</h4>
+                  <p class="book-meta">${loan.bookAuthor} • ${loan.bookIsbn}</p>
+                  <p class="due-date">Due: ${dueDate ? dueDate.toDateString() : '-'}</p>
+                </div>
+              `;
+            });
+            currentLoans.innerHTML = html;
+          }
+        } catch (e) {
+          console.error(e);
+          currentLoans.innerHTML = '<p class="empty-message">Failed to load loans</p>';
+        }
+      });
+
+      function logout() { auth.signOut().then(() => window.location.href = 'login.html'); }
+      logoutBtn.addEventListener('click', logout);
+    </script>
+  </body>
+</html>

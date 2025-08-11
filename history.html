@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reading History | NextGen Library Hub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;300;400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div class="background"><div class="shape"></div><div class="shape"></div></div>
+    <header class="lib-header">
+      <div class="logo"><i class="fas fa-book-open"></i><h1>NextGen Library Hub</h1></div>
+      <nav class="lib-nav">
+        <a href="student-dashboard.html"><i class="fas fa-home"></i> Home</a>
+        <a href="student-books.html"><i class="fas fa-book"></i> My Books</a>
+      </nav>
+    </header>
+
+    <main class="container">
+      <section class="card">
+        <h3><i class="fas fa-history"></i> Reading History</h3>
+        <div id="historyList" class="book-list"><p class="empty-message">Loading history...</p></div>
+      </section>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyDNKHjmGKMTJhTGWqI-i8VzaqwVxvnb7tw",
+        authDomain: "nextgenlibraryhub.firebaseapp.com",
+        projectId: "nextgenlibraryhub",
+        storageBucket: "nextgenlibraryhub.appspot.com",
+        messagingSenderId: "18107313735",
+        appId: "1:18107313735:web:54edbb5aca14ca66670b62",
+        measurementId: "G-VHRJSKY7W5",
+      };
+      firebase.initializeApp(firebaseConfig);
+      firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(console.error);
+      const auth = firebase.auth();
+      const db = firebase.firestore();
+
+      const listEl = document.getElementById('historyList');
+
+      auth.onAuthStateChanged(async (user) => {
+        if (!user) { window.location.href = 'login.html'; return; }
+        try {
+          const returned = await db.collection('loans').where('studentId','==',user.uid).where('status','==','returned').orderBy('dueDate','desc').get();
+          const completed = await db.collection('loans').where('studentId','==',user.uid).where('status','==','completed').orderBy('dueDate','desc').get();
+          const docs = [...returned.docs, ...completed.docs];
+          if (docs.length === 0) { listEl.innerHTML = '<p class="empty-message">No history</p>'; return; }
+          listEl.innerHTML = docs.map(d => {
+            const loan = d.data();
+            const dueDate = loan.dueDate?.toDate ? loan.dueDate.toDate() : new Date(loan.dueDate);
+            return `
+              <div class="book-card">
+                <h4>${loan.bookTitle}</h4>
+                <p class="book-meta">${loan.bookAuthor} • ${loan.bookIsbn}</p>
+                <p class="book-status">Status: ${loan.status}</p>
+                <p class="due-date">Due: ${dueDate ? dueDate.toDateString() : '-'}</p>
+              </div>`; }).join('');
+        } catch (e) { console.error(e); listEl.innerHTML = '<p class="empty-message">Failed to load history</p>'; }
+      });
+    </script>
+  </body>
+</html>
