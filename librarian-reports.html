@@ -38,6 +38,7 @@
         measurementId: "G-VHRJSKY7W5",
       };
       firebase.initializeApp(firebaseConfig);
+      firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(console.error);
       const auth = firebase.auth();
       const db = firebase.firestore();
 

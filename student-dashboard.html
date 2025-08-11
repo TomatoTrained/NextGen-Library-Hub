@@ -227,6 +227,7 @@
 
       // Initialize Firebase
       firebase.initializeApp(firebaseConfig);
+      firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(console.error);
       const auth = firebase.auth();
       const db = firebase.firestore();
 
