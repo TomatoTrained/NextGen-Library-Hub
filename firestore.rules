@@ -1,0 +1,136 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function hasRole(role) {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/librarians/$(request.auth.uid))
+        && get(/databases/$(database)/documents/librarians/$(request.auth.uid)).data.role == role;
+    }
+
+    function isAdmin() {
+      return hasRole('admin');
+    }
+
+    // Treat admin as having librarian privileges too
+    function isLibrarian() {
+      return hasRole('librarian') || isAdmin();
+    }
+
+    function isSelf(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Librarian profiles
+    match /librarians/{userId} {
+      // User can read/update their own doc; admin can read/update any
+      allow read: if isSelf(userId) || isAdmin();
+      allow update: if isSelf(userId) || isAdmin();
+
+      // Admin creates/deletes librarian docs
+      allow create, delete: if isAdmin();
+    }
+
+    // Student profiles
+    match /students/{userId} {
+      // Students create their own doc at signup; librarians can also provision
+      allow create: if isSelf(userId) || isLibrarian();
+
+      // Student can read/update their own; librarians can manage all student records
+      allow read, update: if isSelf(userId) || isLibrarian();
+
+      // Librarians (or admin) may delete student docs if needed
+      allow delete: if isLibrarian();
+    }
+
+    // Books inventory
+    match /books/{bookId} {
+      // Any signed-in user can read (browse catalog, management screens)
+      allow read: if isSignedIn();
+
+      // Librarians manage inventory
+      allow create, update, delete: if isLibrarian();
+
+      // Student RETURN: allow flipping checked-out -> available when they are the lastBorrower,
+      // and only status can change (no metadata edits)
+      allow update: if isSignedIn()
+        && resource.data.status == 'checked-out'
+        && request.resource.data.status == 'available'
+        && resource.data.lastBorrower == request.auth.uid
+        && request.resource.data.lastBorrower == resource.data.lastBorrower
+        && request.resource.data.diff(resource.data).changedKeys().hasOnly(['status']);
+
+      // Student BORROW: allow flipping available -> checked-out, setting lastBorrower to themselves,
+      // and only these fields can change
+      allow update: if isSignedIn()
+        && resource.data.status == 'available'
+        && request.resource.data.status == 'checked-out'
+        && request.resource.data.lastBorrower == request.auth.uid
+        && request.resource.data.diff(resource.data).changedKeys().hasOnly(['status', 'lastBorrower']);
+    }
+
+    // Loans
+    match /loans/{loanId} {
+      // Librarians can read all; students can read their own loans
+      allow read: if isLibrarian() || (isSignedIn() && resource.data.studentId == request.auth.uid);
+
+      // Allow student self-borrow:
+      // - Student creates loan for themselves only
+      // - Must be an active loan with required fields and allowed keys only
+      allow create: if isLibrarian()
+        || (isSignedIn()
+            && request.resource.data.studentId == request.auth.uid
+            && request.resource.data.status == 'active'
+            && request.resource.data.bookId is string
+            && request.resource.data.checkoutDate is timestamp
+            && request.resource.data.dueDate is timestamp
+            && request.resource.data.keys().hasOnly([
+                 'bookId','bookTitle','bookAuthor','bookIsbn',
+                 'studentId','studentName','checkoutDate','dueDate',
+                 'status','libraryId'
+               ])
+        );
+
+      // Updates:
+      // - Librarian can update any loan
+      // - Student can update only their own loan, and only dueDate/status/returnDate
+      allow update: if isLibrarian()
+        || (isSignedIn()
+            && resource.data.studentId == request.auth.uid
+            && request.resource.data.diff(resource.data).changedKeys().hasOnly(['dueDate', 'status', 'returnDate']));
+
+      // Deletion reserved to librarians/admin
+      allow delete: if isLibrarian();
+    }
+
+    // Fines
+    match /fines/{fineId} {
+      // Librarians can read all; students can read their own
+      allow read: if isLibrarian() || (isSignedIn() && resource.data.studentId == request.auth.uid);
+
+      // Create:
+      // - Librarian can create fines
+      // - Student may create their own fine (used by return flow) if it targets them and references a loanId
+      allow create: if isLibrarian()
+        || (isSignedIn()
+            && request.resource.data.studentId == request.auth.uid
+            && request.resource.data.loanId is string);
+
+      // Updates allowed to librarian and the student who owns the fine
+      allow update: if isLibrarian() || (isSignedIn() && resource.data.studentId == request.auth.uid);
+
+      // Deletion reserved to librarian/admin
+      allow delete: if isLibrarian();
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
