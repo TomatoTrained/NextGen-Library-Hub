@@ -38,6 +38,11 @@
           <div class="tool-card">
             <h4><i class="fas fa-book"></i> Books</h4>
             <p>Add missing <span class="mono">libraryId</span> to books (up to 500 at a time).</p>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap: wrap; margin:6px 0;">
+              <input type="file" id="booksFile" accept=".json,.csv" />
+              <button class="btn-student" id="importBooksBtn"><i class="fas fa-file-import"></i> Import</button>
+              <button class="btn-student" id="loadSampleBtn"><i class="fas fa-database"></i> Load Sample Data</button>
+            </div>
             <button class="btn-student" id="fixBooksBtn"><i class="fas fa-wrench"></i> Backfill Books</button>
           </div>
           <div class="tool-card">
@@ -99,6 +104,33 @@
       });
 
       document.getElementById('signOutBtn').addEventListener('click', ()=> auth.signOut().then(()=> window.location.href='adminlogin.html'));
+
+      async function importBooksFromArray(arr){
+        if (!LIB_ID) { log('No LIB_ID set'); return; }
+        let created = 0, skipped = 0;
+        for (const item of arr){
+          const title = (item.title||'').trim();
+          const author = (item.author||'').trim();
+          const isbn = (item.isbn||'').trim();
+          const category = (item.category||'reference').trim();
+          if (!title || !author || !isbn){ skipped++; continue; }
+          try {
+            // prevent duplicates by ISBN within library
+            const dup = await db.collection('books')
+              .where('libraryId','==',LIB_ID)
+              .where('isbn','==',isbn)
+              .limit(1)
+              .get();
+            if (!dup.empty){ skipped++; continue; }
+            await db.collection('books').add({
+              title, author, isbn, category,
+              status: 'available', addedDate: new Date(), libraryId: LIB_ID
+            });
+            created++;
+          } catch(e){ log(`Create failed for ISBN ${isbn}: ${e.message}`); }
+        }
+        log(`Import done: created=${created}, skipped=${skipped}`);
+      }
 
       async function backfillCollection(collName) {
         if (!LIB_ID) { log('No LIB_ID set'); return; }
