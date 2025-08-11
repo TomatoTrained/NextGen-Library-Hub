@@ -246,6 +246,7 @@
 
       // Student data
       let currentStudent = null;
+      let LIB_ID = null; // optional scope if student records include libraryId
 
       // Check authentication and load student data
       auth.onAuthStateChanged(async (user) => {
@@ -263,6 +264,9 @@
                 uid: user.uid,
                 ...studentDoc.data(),
               };
+
+              // Set library context if present on student
+              LIB_ID = currentStudent.libraryId || null;
 
               // Update UI with student info
               studentNameElements.forEach(
@@ -299,18 +303,24 @@
             .collection("loans")
             .where("studentId", "==", currentStudent.uid)
             .where("status", "==", "active")
-            .orderBy("dueDate", "asc")
             .get();
 
           let loansCount = 0;
           let overdueCount = 0;
+
+          // Sort client-side by due date ascending
+          const docsSorted = loansQuery.docs.sort((a, b) => {
+            const ad = a.data().dueDate?.toDate ? a.data().dueDate.toDate() : a.data().dueDate;
+            const bd = b.data().dueDate?.toDate ? b.data().dueDate.toDate() : b.data().dueDate;
+            return new Date(ad) - new Date(bd);
+          });
 
           if (loansQuery.empty) {
             currentLoans.innerHTML =
               '<p class="empty-message">You have no books currently checked out</p>';
           } else {
             let loansHTML = "";
-            loansQuery.forEach((doc) => {
+            docsSorted.forEach((doc) => {
               const loan = doc.data();
               loansCount++;
 
@@ -376,8 +386,7 @@
           let query = db
             .collection("books")
             .where("status", "==", "available")
-            .orderBy("title")
-            .limit(4);
+            .limit(20);
 
           if (currentStudent.grade) {
             // If grade is specified, try to find books for that grade level
@@ -389,7 +398,7 @@
                 currentStudent.grade
               )
               .where("status", "==", "available")
-              .limit(4);
+              .limit(20);
           }
 
           const snapshot = await query.get();
@@ -398,8 +407,14 @@
             recommendedBooks.innerHTML =
               '<p class="empty-message">No recommendations available at this time</p>';
           } else {
+            // Sort client-side by title
+            docs = snapshot.docs.sort((a,b)=>{
+              const at=(a.data().title||'').toLowerCase();
+              const bt=(b.data().title||'').toLowerCase();
+              return at.localeCompare(bt);
+            });
             let booksHTML = "";
-            snapshot.forEach((doc) => {
+            docs.forEach((doc) => {
               const book = doc.data();
               booksHTML += `
                 <div class="book-card">
@@ -518,6 +533,7 @@
             checkoutDate: new Date(),
             dueDate: dueDate,
             status: "active",
+            libraryId: LIB_ID,
           });
 
           // Update book status
