@@ -69,14 +69,19 @@
           const loansQuery = await db.collection('loans')
             .where('studentId', '==', user.uid)
             .where('status', '==', 'active')
-            .orderBy('dueDate', 'asc')
             .get();
 
           if (loansQuery.empty) {
             currentLoans.innerHTML = '<p class="empty-message">No active loans</p>';
           } else {
+            // sort client-side by due date ascending
+            const sorted = loansQuery.docs.sort((a,b)=>{
+              const ad = a.data().dueDate?.toDate ? a.data().dueDate.toDate() : a.data().dueDate;
+              const bd = b.data().dueDate?.toDate ? b.data().dueDate.toDate() : b.data().dueDate;
+              return new Date(ad) - new Date(bd);
+            });
             let html = '';
-            loansQuery.forEach((d) => {
+            sorted.forEach((d) => {
               const loan = d.data();
               const dueDate = loan.dueDate?.toDate ? loan.dueDate.toDate() : new Date(loan.dueDate);
               html += `
