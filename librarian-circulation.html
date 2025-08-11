@@ -7,6 +7,15 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;300;400;500;600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="css/style.css" />
+    <style>
+      .rfid-card { background: rgba(255,255,255,0.1); padding:16px; border-radius:10px; }
+      .rfid-status { margin-bottom:10px; }
+      .rfid-feedback { min-height: 22px; margin-top: 8px; font-size: 0.95rem; }
+      .rfid-success { color:#4bb543; }
+      .rfid-error { color:#ff6b6b; }
+      .actions { display:flex; gap:8px; margin-top:10px; }
+      input[type=text] { width:100%; }
+    </style>
   </head>
   <body>
     <div class="background"><div class="shape"></div><div class="shape"></div></div>
@@ -18,11 +27,150 @@
     </header>
 
     <main class="container">
-      <section class="card">
-        <h3><i class="fas fa-exchange-alt"></i> Circulation</h3>
-        <p>Use the RFID Circulation Desk in Dashboard for check-in/out. This page is a placeholder.</p>
-        <a class="btn-student" href="dashboard.html"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+      <section class="card rfid-card">
+        <h3><i class="fas fa-satellite-dish"></i> RFID Circulation Desk</h3>
+        <div class="rfid-status"><i class="fas fa-circle" style="color:#23a2f6"></i> Scanner Ready</div>
+        <div class="form-group">
+          <input type="text" id="rfid-input" placeholder="Scan book or student card" autofocus />
+          <div class="rfid-feedback" id="rfid-feedback"></div>
+        </div>
+        <div class="actions">
+          <button class="btn-student" id="checkoutBtn"><i class="fas fa-book"></i> Check Out</button>
+          <button class="btn-staff" id="checkinBtn"><i class="fas fa-undo"></i> Check In</button>
+        </div>
+      </section>
+
+      <section class="card" style="margin-top:16px">
+        <h3><i class="fas fa-info-circle"></i> Selected</h3>
+        <div id="selectedInfo" class="muted">Scan a book (ISBN) then a student card to prepare checkout. Scan only a book to check in.</div>
       </section>
     </main>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyDNKHjmGKMTJhTGWqI-i8VzaqwVxvnb7tw",
+        authDomain: "nextgenlibraryhub.firebaseapp.com",
+        projectId: "nextgenlibraryhub",
+        storageBucket: "nextgenlibraryhub.appspot.com",
+        messagingSenderId: "18107313735",
+        appId: "1:18107313735:web:54edbb5aca14ca66670b62",
+        measurementId: "G-VHRJSKY7W5",
+      };
+      firebase.initializeApp(firebaseConfig);
+      firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(console.error);
+      const auth = firebase.auth();
+      const db = firebase.firestore();
+
+      const rfidInput = document.getElementById('rfid-input');
+      const feedback = document.getElementById('rfid-feedback');
+      const selectedInfo = document.getElementById('selectedInfo');
+      const checkoutBtn = document.getElementById('checkoutBtn');
+      const checkinBtn = document.getElementById('checkinBtn');
+
+      let LIB_ID = null;
+      let selectedBook = null;
+      let selectedStudent = null;
+
+      auth.onAuthStateChanged(async (user)=>{
+        if (!user) { window.location.href = 'adminlogin.html'; return; }
+        const libDoc = await db.collection('librarians').doc(user.uid).get();
+        if (!libDoc.exists) { await auth.signOut(); window.location.href = 'adminlogin.html'; return; }
+        LIB_ID = libDoc.data().libraryId || user.uid;
+      });
+
+      function updateSelected(){
+        let parts = [];
+        if (selectedBook) parts.push(`Book: ${selectedBook.title} (${selectedBook.isbn})`);
+        if (selectedStudent) parts.push(`Student: ${selectedStudent.fullName} (${selectedStudent.studentId})`);
+        selectedInfo.textContent = parts.length? parts.join(' • ') : 'Scan a book (ISBN) then a student card to prepare checkout. Scan only a book to check in.';
+      }
+
+      rfidInput.addEventListener('input', async (e)=>{
+        const val = e.target.value.trim();
+        if (val.length < 6) return;
+        try {
+          // Try book by ISBN
+          let snap = await db.collection('books').where('isbn','==',val).limit(1).get();
+          if (!snap.empty) {
+            const d = snap.docs[0];
+            selectedBook = { id: d.id, ...d.data() };
+            feedback.innerHTML = `<span class="rfid-success">Scanned book: ${selectedBook.title}</span>`;
+            updateSelected();
+            rfidInput.value = '';
+            return;
+          }
+          // Try student by rfidTag
+          snap = await db.collection('students').where('rfidTag','==',val).limit(1).get();
+          if (!snap.empty) {
+            const d = snap.docs[0];
+            selectedStudent = { id: d.id, ...d.data() };
+            feedback.innerHTML = `<span class="rfid-success">Scanned student: ${selectedStudent.fullName}</span>`;
+            updateSelected();
+            rfidInput.value = '';
+            return;
+          }
+          feedback.innerHTML = `<span class="rfid-error">No book or student found for ${val}</span>`;
+          rfidInput.value = '';
+        } catch(err){
+          console.error(err);
+          feedback.innerHTML = `<span class="rfid-error">Error: ${err.message}</span>`;
+          rfidInput.value = '';
+        }
+      });
+
+      checkoutBtn.addEventListener('click', async ()=>{
+        if (!selectedBook || !selectedStudent) { feedback.innerHTML = '<span class="rfid-error">Scan book then student to checkout</span>'; return; }
+        if (selectedBook.status !== 'available'){ feedback.innerHTML = '<span class="rfid-error">Book is not available</span>'; return; }
+        try{
+          const due = new Date(); due.setDate(due.getDate()+14);
+          await db.collection('loans').add({
+            bookId: selectedBook.id,
+            bookTitle: selectedBook.title,
+            bookAuthor: selectedBook.author,
+            bookIsbn: selectedBook.isbn,
+            studentId: selectedStudent.id,
+            studentName: selectedStudent.fullName,
+            checkoutDate: new Date(),
+            dueDate: due,
+            status: 'active',
+            libraryId: LIB_ID
+          });
+          await db.collection('books').doc(selectedBook.id).update({ status:'checked-out', lastBorrower: selectedStudent.id });
+          feedback.innerHTML = '<span class="rfid-success">Checkout complete</span>';
+          selectedBook = null; selectedStudent = null; updateSelected();
+        } catch(err){ feedback.innerHTML = `<span class=\"rfid-error\">${err.message}</span>`; }
+      });
+
+      checkinBtn.addEventListener('click', async ()=>{
+        if (!selectedBook) { feedback.innerHTML = '<span class="rfid-error">Scan a book to check in</span>'; return; }
+        try{
+          const loanQ = await db.collection('loans').where('bookId','==',selectedBook.id).where('status','==','active').limit(1).get();
+          if (loanQ.empty){ feedback.innerHTML = '<span class="rfid-error">No active loan found</span>'; return; }
+          const loanDoc = loanQ.docs[0];
+          const loan = loanDoc.data();
+          await db.collection('loans').doc(loanDoc.id).update({ status:'returned', returnDate: new Date() });
+          await db.collection('books').doc(selectedBook.id).update({ status:'available' });
+          // fine if overdue
+          const due = loan.dueDate?.toDate ? loan.dueDate.toDate() : new Date(loan.dueDate);
+          if (new Date() > due){
+            const days = Math.ceil((new Date() - due)/(1000*60*60*24));
+            await db.collection('fines').add({
+              studentId: loan.studentId,
+              loanId: loanDoc.id,
+              amount: days * 0.5,
+              reason: `Late return (${days} day${days!==1?'s':''})`,
+              issueDate: new Date(),
+              status: 'pending',
+              libraryId: LIB_ID
+            });
+          }
+          feedback.innerHTML = '<span class="rfid-success">Check in complete</span>';
+          selectedBook = null; selectedStudent = null; updateSelected();
+        } catch(err){ feedback.innerHTML = `<span class=\"rfid-error\">${err.message}</span>`; }
+      });
+    </script>
   </body>
 </html>
