@@ -367,6 +367,9 @@
       // Current scanned item
       let currentScannedItem = null;
       let currentAction = null; // 'checkout' or 'checkin'
+      // Current librarian context
+      let currentLibrarian = null;
+      let LIB_ID = null; // Scope for Firestore queries to satisfy security rules
 
       // Check authentication and load librarian data
       auth.onAuthStateChanged(async (user) => {
@@ -388,6 +391,10 @@
                   (el.textContent =
                     librarianData.fullName || user.email.split("@")[0])
               );
+
+              // Set librarian context for secured queries
+              currentLibrarian = { uid: user.uid, ...librarianData };
+              LIB_ID = librarianData.libraryId || user.uid;
 
               // Load library stats
               loadLibraryStats();
@@ -416,35 +423,46 @@
       // Load library statistics
       async function loadLibraryStats() {
         try {
-          // Get total books count
-          const totalBooksQuery = await db.collection("books").count().get();
-          totalBooksElement.textContent = totalBooksQuery.data().count;
+          if (!LIB_ID) return;
 
-          // Get available books count
-          const availableBooksQuery = await db
+          // Total books scoped to this library
+          const totalSnap = await db
             .collection("books")
+            .where("libraryId", "==", LIB_ID)
+            .get();
+          totalBooksElement.textContent = totalSnap.size || 0;
+
+          // Available books
+          const availableSnap = await db
+            .collection("books")
+            .where("libraryId", "==", LIB_ID)
             .where("status", "==", "available")
-            .count()
             .get();
-          availableBooksElement.textContent = availableBooksQuery.data().count;
+          availableBooksElement.textContent = availableSnap.size || 0;
 
-          // Get checked out books count
-          const checkedOutBooksQuery = await db
+          // Checked out books
+          const checkedOutSnap = await db
             .collection("books")
+            .where("libraryId", "==", LIB_ID)
             .where("status", "==", "checked-out")
-            .count()
             .get();
-          checkedOutBooksElement.textContent =
-            checkedOutBooksQuery.data().count;
+          checkedOutBooksElement.textContent = checkedOutSnap.size || 0;
 
-          // Get overdue books count
-          const overdueLoansQuery = await db
+          // Overdue loans: fetch active loans and count client-side
+          const activeLoansSnap = await db
             .collection("loans")
+            .where("libraryId", "==", LIB_ID)
             .where("status", "==", "active")
-            .where("dueDate", "<", new Date())
-            .count()
+            .limit(200)
             .get();
-          overdueBooksElement.textContent = overdueLoansQuery.data().count;
+          const now = new Date();
+          let overdueCount = 0;
+          activeLoansSnap.forEach((d) => {
+            const loan = d.data();
+            const due = loan.dueDate?.toDate ? loan.dueDate.toDate() : new Date(loan.dueDate);
+            if (due && due < now) overdueCount++;
+          });
+          overdueBooksElement.textContent = overdueCount;
         } catch (error) {
           console.error("Error loading library stats:", error);
         }
@@ -453,9 +471,10 @@
       // Load books for management
       async function loadBooks() {
         try {
+          if (!LIB_ID) return;
           const querySnapshot = await db
             .collection("books")
-            .orderBy("title")
+            .where("libraryId", "==", LIB_ID)
             .limit(50)
             .get();
 
@@ -505,9 +524,10 @@
       // Show recent loans
       async function showRecentLoans() {
         try {
+          if (!LIB_ID) return;
           const querySnapshot = await db
             .collection("loans")
-            .orderBy("checkoutDate", "desc")
+            .where("libraryId", "==", LIB_ID)
             .limit(10)
             .get();
 
@@ -522,10 +542,11 @@
       // Show recent returns
       async function showRecentReturns() {
         try {
+          if (!LIB_ID) return;
           const querySnapshot = await db
             .collection("loans")
+            .where("libraryId", "==", LIB_ID)
             .where("status", "==", "returned")
-            .orderBy("returnDate", "desc")
             .limit(10)
             .get();
 
@@ -540,13 +561,20 @@
       // Show overdue books
       async function showOverdueBooks() {
         try {
-          const querySnapshot = await db
+          if (!LIB_ID) return;
+          const snapshot = await db
             .collection("loans")
+            .where("libraryId", "==", LIB_ID)
             .where("status", "==", "active")
-            .where("dueDate", "<", new Date())
-            .orderBy("dueDate")
-            .limit(10)
+            .limit(100)
             .get();
+          const now = new Date();
+          const overdueDocs = snapshot.docs.filter((d) => {
+            const loan = d.data();
+            const due = loan.dueDate?.toDate ? loan.dueDate.toDate() : new Date(loan.dueDate);
+            return due && due < now;
+          });
+          const querySnapshot = { forEach: (cb) => overdueDocs.forEach(cb) };
 
           displayActivity(querySnapshot, "overdue");
         } catch (error) {
@@ -755,6 +783,7 @@
             checkoutDate: new Date(),
             dueDate: new Date(dueDate),
             status: "active",
+            libraryId: LIB_ID,
           });
 
           // Update book status
@@ -933,8 +962,10 @@
 
         try {
           // Check if book with this ISBN already exists
+          if (!LIB_ID) return;
           const existingBook = await db
             .collection("books")
+            .where("libraryId", "==", LIB_ID)
             .where("isbn", "==", isbn)
             .get();
 
@@ -951,6 +982,7 @@
             category: category,
             status: "available",
             addedDate: new Date(),
+            libraryId: LIB_ID,
           });
 
           alert("Book added successfully!");
