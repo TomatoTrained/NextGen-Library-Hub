@@ -298,33 +298,34 @@
         if (!currentStudent) return;
 
         try {
-          // Get current loans
+          // Get loans for this student (filter status client-side to avoid composite index)
           const loansQuery = await db
             .collection("loans")
             .where("studentId", "==", currentStudent.uid)
-            .where("status", "==", "active")
             .get();
 
           let loansCount = 0;
           let overdueCount = 0;
 
-          // Sort client-side by due date ascending
-          const docsSorted = loansQuery.docs.sort((a, b) => {
-            const ad = a.data().dueDate?.toDate ? a.data().dueDate.toDate() : a.data().dueDate;
-            const bd = b.data().dueDate?.toDate ? b.data().dueDate.toDate() : b.data().dueDate;
-            return new Date(ad) - new Date(bd);
-          });
+          // Filter to active and sort client-side by due date ascending
+          const docsSorted = loansQuery.docs
+            .map(d=>({ id:d.id, ...d.data()}))
+            .filter(l=> l.status === 'active')
+            .sort((a, b) => {
+              const ad = a.dueDate?.toDate ? a.dueDate.toDate() : a.dueDate;
+              const bd = b.dueDate?.toDate ? b.dueDate.toDate() : b.dueDate;
+              return new Date(ad) - new Date(bd);
+            });
 
           if (loansQuery.empty) {
             currentLoans.innerHTML =
               '<p class="empty-message">You have no books currently checked out</p>';
           } else {
             let loansHTML = "";
-            docsSorted.forEach((doc) => {
-              const loan = doc.data();
+            docsSorted.forEach((loan) => {
               loansCount++;
 
-              const dueDate = loan.dueDate.toDate();
+              const dueDate = loan.dueDate?.toDate ? loan.dueDate.toDate() : new Date(loan.dueDate);
               const today = new Date();
               const isOverdue = dueDate < today;
 
@@ -336,14 +337,10 @@
                   <p class="book-meta">${loan.bookAuthor} • ${loan.bookIsbn}</p>
                   <p class="due-date">Due: ${dueDate.toDateString()}</p>
                   <div class="book-actions">
-                    <button onclick="viewBookDetails('${
-                      loan.bookId
-                    }')" class="edit-btn">
+                    <button onclick="viewBookDetails('${loan.bookId}')" class="edit-btn">
                       <i class="fas fa-info-circle"></i> Details
                     </button>
-                    <button onclick="renewLoan('${
-                      doc.id
-                    }')" class="checkout-btn">
+                    <button onclick="renewLoan('${loan.id}')" class="checkout-btn">
                       <i class="fas fa-sync"></i> Renew
                     </button>
                   </div>
@@ -362,12 +359,12 @@
           const finesQuery = await db
             .collection("fines")
             .where("studentId", "==", currentStudent.uid)
-            .where("status", "==", "pending")
             .get();
 
           let totalFines = 0;
           finesQuery.forEach((doc) => {
-            totalFines += doc.data().amount || 0;
+            const d = doc.data();
+            if ((d.status||'') === 'pending') totalFines += d.amount || 0;
           });
 
           finesAmount.textContent = `$${totalFines.toFixed(2)}`;
@@ -382,61 +379,37 @@
       // Load recommended books
       async function loadRecommendedBooks() {
         try {
-          // Simple recommendation based on grade level
-          let query = db
+          // Fetch available books and filter client-side by grade/library
+          const snapshot = await db
             .collection("books")
             .where("status", "==", "available")
-            .limit(20);
-
-          if (currentStudent.grade) {
-            // If grade is specified, try to find books for that grade level
-            query = db
-              .collection("books")
-              .where(
-                "recommendedGrades",
-                "array-contains",
-                currentStudent.grade
-              )
-              .where("status", "==", "available")
-              .limit(20);
-          }
-
-          const snapshot = await query.get();
+            .limit(100)
+            .get();
 
           if (snapshot.empty) {
             recommendedBooks.innerHTML =
               '<p class="empty-message">No recommendations available at this time</p>';
           } else {
-            // Sort client-side by title
-            docs = snapshot.docs.sort((a,b)=>{
-              const at=(a.data().title||'').toLowerCase();
-              const bt=(b.data().title||'').toLowerCase();
-              return at.localeCompare(bt);
-            });
+            // Filter by libraryId if available and by grade recommendation if provided
+            const filtered = snapshot.docs
+              .map(d=>({ id:d.id, ...d.data()}))
+              .filter(b=> (LIB_ID ? b.libraryId === LIB_ID : true)
+                && (!currentStudent.grade || (Array.isArray(b.recommendedGrades) && b.recommendedGrades.includes(currentStudent.grade))));
+            const docs = filtered.sort((a,b)=> (a.title||'').toLowerCase().localeCompare((b.title||'').toLowerCase())).slice(0,4);
             let booksHTML = "";
-            docs.forEach((doc) => {
-              const book = doc.data();
+            docs.forEach((book) => {
               booksHTML += `
                 <div class="book-card">
-                  <h4>${book.title}</h4>
-                  <p class="book-meta">${book.author} • ${book.isbn}</p>
-                  <div class="book-actions">
-                    <button onclick="viewBookDetails('${doc.id}')" class="edit-btn">
-                      <i class="fas fa-info-circle"></i> Details
-                    </button>
-                    <button onclick="borrowBook('${doc.id}')" class="checkout-btn">
-                      <i class="fas fa-book"></i> Borrow
-                    </button>
-                  </div>
+                  <h4>${book.title||'-'}</h4>
+                  <p class="book-meta">${book.author||'-'} • ${book.isbn||'-'}</p>
+                  <div class="book-status">Available</div>
                 </div>
               `;
             });
             recommendedBooks.innerHTML = booksHTML;
           }
         } catch (error) {
-          console.error("Error loading recommended books:", error);
-          recommendedBooks.innerHTML =
-            '<p class="empty-message">Could not load recommendations</p>';
+          console.error("Error loading student data:", error);
         }
       }
 
