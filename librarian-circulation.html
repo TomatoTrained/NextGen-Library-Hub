@@ -16,6 +16,16 @@
       .actions { display:flex; gap:8px; margin-top:10px; }
       input[type=text] { width:100%; }
     </style>
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Library Hub">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/service-worker.js');
+      }
+    </script>
   </head>
   <body>
     <div class="background"><div class="shape"></div><div class="shape"></div></div>
