@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Tools | NextGen Library Hub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+      .tools-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:16px; }
+      .tool-card { background: rgba(255,255,255,0.08); padding:16px; border-radius:10px; }
+      .muted { color:#bbb; font-size:0.9rem; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+      .log { white-space: pre-wrap; font-size: 0.9rem; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; max-height: 250px; overflow:auto; }
+    </style>
+  </head>
+  <body>
+    <div class="background"><div class="shape"></div><div class="shape"></div></div>
+    <header class="lib-header">
+      <div class="logo"><i class="fas fa-tools"></i><h1>Admin Tools</h1></div>
+      <nav class="lib-nav">
+        <a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
+      </nav>
+    </header>
+
+    <main class="container">
+      <section class="card">
+        <h3><i class="fas fa-shield-alt"></i> Backfill and Verify</h3>
+        <p class="muted">You must be signed in as a librarian. These actions add missing <span class="mono">libraryId</span> to existing documents.</p>
+        <p>Library Scope: <span id="libScope" class="mono">-</span></p>
+        <div class="tools-grid">
+          <div class="tool-card">
+            <h4><i class="fas fa-user-tie"></i> Librarian Profile</h4>
+            <p>Ensure your librarian profile has <span class="mono">libraryId</span>.</p>
+            <button class="btn-student" id="fixLibrarianBtn"><i class="fas fa-id-badge"></i> Ensure libraryId</button>
+          </div>
+          <div class="tool-card">
+            <h4><i class="fas fa-book"></i> Books</h4>
+            <p>Add missing <span class="mono">libraryId</span> to books (up to 500 at a time).</p>
+            <button class="btn-student" id="fixBooksBtn"><i class="fas fa-wrench"></i> Backfill Books</button>
+          </div>
+          <div class="tool-card">
+            <h4><i class="fas fa-receipt"></i> Loans</h4>
+            <p>Add missing <span class="mono">libraryId</span> to loans (up to 500).</p>
+            <button class="btn-student" id="fixLoansBtn"><i class="fas fa-wrench"></i> Backfill Loans</button>
+          </div>
+          <div class="tool-card">
+            <h4><i class="fas fa-money-bill-wave"></i> Fines</h4>
+            <p>Add missing <span class="mono">libraryId</span> to fines (up to 500).</p>
+            <button class="btn-student" id="fixFinesBtn"><i class="fas fa-wrench"></i> Backfill Fines</button>
+          </div>
+          <div class="tool-card">
+            <h4><i class="fas fa-user-graduate"></i> Students (optional)</h4>
+            <p>Optionally set <span class="mono">libraryId</span> on student profiles (up to 500).</p>
+            <button class="btn-student" id="fixStudentsBtn"><i class="fas fa-wrench"></i> Backfill Students</button>
+          </div>
+        </div>
+        <div style="margin-top:16px">
+          <button class="btn-staff" id="signOutBtn"><i class="fas fa-sign-out-alt"></i> Sign out</button>
+        </div>
+        <h4 style="margin-top:20px">Logs</h4>
+        <div id="log" class="log"></div>
+      </section>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyDNKHjmGKMTJhTGWqI-i8VzaqwVxvnb7tw",
+        authDomain: "nextgenlibraryhub.firebaseapp.com",
+        projectId: "nextgenlibraryhub",
+        storageBucket: "nextgenlibraryhub.appspot.com",
+        messagingSenderId: "18107313735",
+        appId: "1:18107313735:web:54edbb5aca14ca66670b62",
+        measurementId: "G-VHRJSKY7W5",
+      };
+      firebase.initializeApp(firebaseConfig);
+      firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(console.error);
+      const auth = firebase.auth();
+      const db = firebase.firestore();
+
+      const logEl = document.getElementById('log');
+      function log(msg){ logEl.textContent += (msg + "\n"); logEl.scrollTop = logEl.scrollHeight; }
+
+      let LIB_ID = null;
+      let librarianDoc = null;
+
+      auth.onAuthStateChanged(async (user) => {
+        if (!user) { window.location.href = 'adminlogin.html'; return; }
+        const doc = await db.collection('librarians').doc(user.uid).get();
+        if (!doc.exists) { await auth.signOut(); window.location.href = 'adminlogin.html'; return; }
+        librarianDoc = doc.data();
+        LIB_ID = librarianDoc.libraryId || user.uid;
+        document.getElementById('libScope').textContent = LIB_ID;
+        log(`Signed in as ${librarianDoc.fullName || user.email} (LIB_ID=${LIB_ID})`);
+      });
+
+      document.getElementById('signOutBtn').addEventListener('click', ()=> auth.signOut().then(()=> window.location.href='adminlogin.html'));
+
+      async function backfillCollection(collName) {
+        if (!LIB_ID) { log('No LIB_ID set'); return; }
+        log(`Scanning ${collName} for missing libraryId...`);
+        const snap = await db.collection(collName).limit(500).get();
+        let updated = 0; let skipped = 0;
+        for (const d of snap.docs) {
+          const data = d.data();
+          if (!data.libraryId) {
+            try {
+              await db.collection(collName).doc(d.id).set({ libraryId: LIB_ID }, { merge: true });
+              updated++;
+            } catch (e) {
+              log(`Failed to update ${collName}/${d.id}: ${e.message}`);
+            }
+          } else {
+            skipped++;
+          }
+        }
+        log(`Done ${collName}: updated=${updated}, skipped=${skipped}`);
+      }
+
+      document.getElementById('fixLibrarianBtn').addEventListener('click', async ()=>{
+        const user = auth.currentUser;
+        if (!user) return;
+        const ref = db.collection('librarians').doc(user.uid);
+        const doc = await ref.get();
+        const data = doc.data() || {};
+        if (!data.libraryId) {
+          await ref.set({ libraryId: user.uid }, { merge: true });
+          LIB_ID = user.uid;
+          document.getElementById('libScope').textContent = LIB_ID;
+          log('Set libraryId on your librarian profile.');
+        } else {
+          log('Librarian profile already has libraryId.');
+        }
+      });
+
+      document.getElementById('fixBooksBtn').addEventListener('click', ()=> backfillCollection('books'));
+      document.getElementById('fixLoansBtn').addEventListener('click', ()=> backfillCollection('loans'));
+      document.getElementById('fixFinesBtn').addEventListener('click', ()=> backfillCollection('fines'));
+      document.getElementById('fixStudentsBtn').addEventListener('click', ()=> backfillCollection('students'));
+    </script>
+  </body>
+</html>
